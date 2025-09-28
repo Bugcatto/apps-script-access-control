@@ -1,0 +1,4 @@
+function setupsheet(){
+setInstSheet();
+importfunction();
+}
