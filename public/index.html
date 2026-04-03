@@ -1,0 +1,4737 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Operations Control · Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --accent: #3b82f6;
+      --accent-soft: #1d4ed8;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --error: #f97373;
+      --success: #4ade80;
+      --radius: 18px;
+      --shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+
+      /* NEW */
+      --bg-1: #020617;
+      --bg-2: #020617;
+      --border-1: rgba(148, 163, 184, 0.35);
+      --border-2: rgba(148, 163, 184, 0.18);
+      --text-muted: var(--muted);
+    }
+
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* === Full-screen layout override === */
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #1f2937, #020617);
+      color: var(--text);
+    }
+
+    #app {
+      max-width: 960px;
+      /* overall content width */
+      margin: 0 auto;
+      /* horizontally center the whole app */
+      padding: 24px 16px 40px;
+      /* some breathing room from edges */
+    }
+
+
+
+
+    /* Tablet and up */
+    @media (min-width: 768px) {
+      .wrap {
+        max-width: 900px;
+      }
+
+      .card {
+        min-height: 480px;
+        padding: 24px 22px 20px;
+      }
+
+      .numpad {
+        max-width: 320px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+    }
+
+    /* Desktop: a bit taller and spaced from the very center */
+    @media (min-width: 1024px) {
+      body {
+        align-items: flex-start;
+        padding-top: 40px;
+      }
+
+      .card {
+        min-height: 560px;
+      }
+    }
+
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px 18px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-height: 420px;
+    }
+
+    .title {
+      font-size: 1.4rem;
+      font-weight: 600;
+      text-align: center;
+      letter-spacing: 0.03em;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      text-align: center;
+      color: var(--muted);
+      margin-top: -6px;
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 10px;
+    }
+
+    .field-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .input {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: rgba(15, 23, 42, 0.8);
+      color: var(--text);
+      padding: 8px 12px;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+    }
+
+    .hidden-input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .pin-dots {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 10px;
+      margin-bottom: 4px;
+    }
+
+    .dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      border: 2px solid var(--muted);
+      background: transparent;
+      transition: all 0.15s ease;
+    }
+
+    .dot.filled {
+      background: var(--accent);
+      border-color: var(--accent);
+      transform: scale(1.1);
+    }
+
+    .status {
+      min-height: 22px;
+      font-size: 0.85rem;
+      text-align: center;
+      margin-top: 4px;
+    }
+
+    .status.error {
+      color: var(--error);
+    }
+
+    .status.success {
+      color: var(--success);
+    }
+
+    .status.muted {
+      color: var(--muted);
+    }
+
+    .numpad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      background: #111827;
+      color: var(--text);
+      box-shadow: 0 3px 0 rgba(0, 0, 0, 0.5);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s ease;
+      white-space: nowrap;
+      /* keeps text inside pill */
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+      background: #020617;
+    }
+
+    /* smaller buttons (Back, tab actions) */
+    .btn.small {
+      padding: 6px 10px;
+      font-size: 0.8rem;
+    }
+
+    /* primary action (Process, Save, etc.) */
+    .btn.primary,
+    .btn.btn-main {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 3px 0 rgba(15, 118, 110, 0.9);
+      font-size: 0.9rem;
+    }
+
+    .btn.primary:active,
+    .btn.btn-main:active {
+      background: var(--accent-soft);
+    }
+
+    /* ghost buttons already used */
+    .btn.ghost {
+      background: transparent;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      color: var(--muted);
+      box-shadow: none;
+      font-size: 0.8rem;
+      padding: 6px 12px;
+    }
+
+
+
+    .btn-main {
+      background: var(--accent);
+      box-shadow: 0 4px 0 rgba(15, 118, 110, 0.9);
+      font-size: 1rem;
+      padding: 10px 0;
+    }
+
+    .btn-main:active {
+      background: var(--accent-soft);
+    }
+
+    .btn-secondary {
+      font-size: 0.9rem;
+    }
+
+    .btn-icon {
+      font-size: 1.1rem;
+    }
+
+    /* Numpad keeps big chunky buttons */
+    .numpad .btn {
+      width: 100%;
+      padding: 14px 0;
+      font-size: 1.2rem;
+      border-radius: 999px;
+    }
+
+
+    .footer-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .app-label {
+      font-size: 0.75rem;
+      text-align: center;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .app-container {
+      margin-top: 10px;
+      height: 60vh;
+      display: none;
+      /* hidden until an app is opened */
+    }
+
+    .app-frame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      border-radius: 14px;
+      background: #020617;
+    }
+
+
+    /* ----- app selection view ----- */
+
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .app-hello {
+      font-size: 0.95rem;
+    }
+
+    .app-hello span {
+      font-weight: 600;
+    }
+
+    .app-role {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .app-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    @media (min-width: 900px) {
+      .app-list {
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+        gap: 12px;
+      }
+    }
+
+    .app-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    /* Desktop: side-by-side */
+    @media (min-width: 960px) {
+      .app-layout {
+        flex-direction: row;
+        align-items: stretch;
+      }
+
+      #appListSection {
+        flex: 0 0 260px;
+        max-width: 280px;
+      }
+
+      #appContainer {
+        flex: 1;
+        margin-top: 0;
+        /* remove extra top gap in desktop layout */
+        height: 70vh;
+      }
+    }
+
+
+
+    .app-card {
+      border-radius: 14px;
+      padding: 10px 10px 9px;
+      background: #020617;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, border-color 0.12s ease;
+    }
+
+    .app-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+      border-color: rgba(59, 130, 246, 0.7);
+    }
+
+    .app-name {
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .app-meta {
+      font-size: 0.75rem;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 4px;
+    }
+
+    /* Center the App List view */
+    .app-list-view {
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    /* Responsive app grid */
+    .app-list-container {
+      display: grid;
+      gap: 18px;
+      width: 100%;
+      justify-content: center;
+      /* centers grid content */
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      max-width: 900px;
+      /* keeps layout tight and centered */
+      margin: 0 auto;
+      /* centers entire grid block */
+    }
+
+    /* App cards themselves */
+    .app-card {
+      width: 100%;
+      max-width: 310px;
+      /* ensures consistent card size */
+      justify-self: center;
+      /* centers card inside its grid cell */
+    }
+
+
+    .chip {
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(15, 118, 110, 0.2);
+      color: #6ee7b7;
+      white-space: nowrap;
+    }
+
+    .chip-level {
+      background: rgba(59, 130, 246, 0.16);
+      color: #93c5fd;
+    }
+
+    .view {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .view.active {
+      display: flex;
+    }
+
+    .top-switch {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: -4px;
+    }
+
+    .top-switch button {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-size: 0.8rem;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    @media (max-height: 600px) {
+      .card {
+        padding: 16px 14px 14px;
+      }
+
+      .title {
+        font-size: 1.2rem;
+      }
+    }
+
+    .emp-form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .emp-col {
+      flex: 1 1 160px;
+      min-width: 0;
+    }
+
+    /* Stack nicely on narrow screens */
+    @media (max-width: 640px) {
+      .emp-form-row {
+        flex-direction: column;
+      }
+    }
+
+    /* ------------------------------
+       Income & Expense – Layout
+    ------------------------------ */
+
+    .income-expense-view {
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* Header title spacing */
+    .income-expense-view .view-header h2 {
+      margin: 0;
+      font-size: 1.4rem;
+    }
+
+    /* ------------------------------
+       Tabs
+    ------------------------------ */
+
+    .ie-tabs {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 4px;
+    }
+
+    .ie-tabs .tab {
+      padding: 6px 12px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-weight: 600;
+      border-bottom: 2px solid transparent;
+    }
+
+    .ie-tabs .tab.active {
+      color: #007bff;
+      border-bottom-color: #007bff;
+    }
+
+    /* ------------------------------
+       Filters (Overview + List)
+    ------------------------------ */
+
+    .ie-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .ie-filters .field {
+      display: flex;
+      flex-direction: column;
+      min-width: 120px;
+    }
+
+    .ie-filters .label {
+      font-size: 0.8rem;
+      margin-bottom: 2px;
+      color: #444;
+    }
+
+    .mt-2 {
+      margin-top: 8px;
+    }
+
+    /* ------------------------------
+       Summary Cards (Overview)
+    ------------------------------ */
+
+    .ie-summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .ie-summary-card {
+      flex: 1;
+      min-width: 130px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f5f5f5;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .ie-summary-card .summary-label {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 4px;
+    }
+
+    .ie-summary-card .summary-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+
+    .ie-summary-card.income {
+      border-left: 4px solid #28a745;
+    }
+
+    .ie-summary-card.expense {
+      border-left: 4px solid #dc3545;
+    }
+
+    .ie-summary-card.net {
+      border-left: 4px solid #007bff;
+    }
+
+    /* ------------------------------
+       Transaction Table
+    ------------------------------ */
+
+    .ie-table-wrapper {
+      overflow-x: auto;
+    }
+
+    .ie-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    .ie-table th,
+    .ie-table td {
+      padding: 8px;
+      border-bottom: 1px solid #e5e5e5;
+    }
+
+    .ie-table th {
+      background: #fafafa;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    .ie-table .row-void {
+      background: #fbeaea !important;
+      color: #b30000;
+    }
+
+    .ie-table .row-void td {
+      text-decoration: line-through;
+    }
+
+    /* ------------------------------
+       Recall & Form Cards
+    ------------------------------ */
+
+    .ie-recall-card,
+    .ie-form-card {
+      background: #fafafa;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #e5e5e5;
+      margin-bottom: 12px;
+    }
+
+    .info-banner {
+      background: #fff3cd;
+      color: #856404;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid #ffeeba;
+      margin-bottom: 10px;
+      font-size: 0.9rem;
+    }
+
+    .hint {
+      font-size: 0.75rem;
+      color: #666;
+    }
+
+    /* ------------------------------
+       Field + Input Styling
+    ------------------------------ */
+
+    .field-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .field {
+      flex: 1;
+      min-width: 130px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .input-error {
+      border-color: #dc3545 !important;
+    }
+
+    .error-text {
+      color: #dc3545;
+      font-size: 0.75rem;
+      margin-top: 2px;
+    }
+
+    /* ------------------------------
+       Action Buttons
+    ------------------------------ */
+
+    .ie-form-card .actions {
+      margin-top: 12px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn.primary,
+    .btn.btn-main {
+      background: #007bff;
+      color: white;
+    }
+
+    .btn.primary:disabled {
+      opacity: 0.6;
+    }
+
+    /* === Income & Expense: dark theme + consistent styling === */
+
+    /* Tabs */
+    .ie-tabs {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.4);
+      padding-bottom: 4px;
+    }
+
+    .ie-tabs .tab {
+      padding: 6px 12px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--muted);
+      border-bottom: 2px solid transparent;
+    }
+
+    .ie-tabs .tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* Filters */
+    .ie-filters .label {
+      font-size: 0.8rem;
+      margin-bottom: 2px;
+      color: var(--muted);
+    }
+
+    /* Summary cards */
+    .ie-summary-card {
+      flex: 1;
+      min-width: 130px;
+      padding: 12px;
+      border-radius: 10px;
+      background: #020617;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      box-shadow: none;
+    }
+
+    .ie-summary-card .summary-label {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .ie-summary-card .summary-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .ie-summary-card.income {
+      border-left: 4px solid #22c55e;
+    }
+
+    .ie-summary-card.expense {
+      border-left: 4px solid #f97373;
+    }
+
+    .ie-summary-card.net {
+      border-left: 4px solid var(--accent);
+    }
+
+    /* Recall & form cards */
+    .ie-recall-card,
+    .ie-form-card {
+      background: #020617;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      margin-bottom: 12px;
+    }
+
+    .info-banner {
+      background: rgba(250, 204, 21, 0.08);
+      color: #fde68a;
+      border-color: rgba(250, 204, 21, 0.35);
+    }
+
+    /* Table */
+    .ie-table th,
+    .ie-table td {
+      border-bottom: 1px solid rgba(31, 41, 55, 0.8);
+    }
+
+    .ie-table th {
+      background: #020617;
+      color: var(--muted);
+    }
+
+    .ie-table {
+      background: #020617;
+    }
+
+    .ie-table .row-void {
+      background: rgba(248, 113, 113, 0.1) !important;
+      color: #fecaca;
+    }
+
+    .ie-table .row-void td {
+      text-decoration: line-through;
+    }
+
+    /* Small text helpers */
+    .hint {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    /* Inputs + errors stay readable on dark cards */
+    .field .input,
+    .ie-form-card .input,
+    .ie-form-card textarea {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      color: var(--text);
+    }
+
+    .input-error {
+      border-color: #f97373 !important;
+    }
+
+    .error-text {
+      color: #f97373;
+    }
+
+    /* Ghost button for “← Apps” */
+    .btn.ghost {
+      background: transparent;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      color: var(--muted);
+      box-shadow: none;
+      font-size: 0.8rem;
+      padding: 6px 10px;
+    }
+
+    .btn.ghost:active {
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    /* Main buttons use accent consistently */
+    .btn.btn-main {
+      background: var(--accent);
+      box-shadow: 0 4px 0 rgba(15, 118, 110, 0.9);
+      color: #fff;
+    }
+
+    .btn.btn-main:active {
+      background: var(--accent-soft);
+    }
+
+    /* Compact Employee Admin form on small screens */
+    @media (max-width: 600px) {
+
+      /* shrink the overall layout spacing */
+      #empAdminView .emp-layout {
+        gap: 6px !important;
+        margin-top: 6px !important;
+      }
+
+      /* form rows: less gap + margin, stacked column */
+      #empAdminView .emp-form-row {
+        flex-direction: column;
+        gap: 4px !important;
+        margin-top: 4px !important;
+      }
+
+      /* columns just behave as full-width blocks */
+      #empAdminView .emp-col {
+        flex: 1 1 100%;
+      }
+
+      /* tighter labels */
+      #empAdminView .field-label {
+        margin-bottom: 2px !important;
+        font-size: 0.8rem;
+      }
+
+      /* smaller inputs */
+      #empAdminView .input,
+      #empAdminView select,
+      #empAdminView textarea {
+        padding: 6px 10px !important;
+        font-size: 0.85rem;
+      }
+
+      /* action buttons row under the form */
+      #empAdminView .emp-actions-row {
+        gap: 6px !important;
+        margin-top: 8px !important;
+        flex-wrap: wrap;
+      }
+    }
+
+    @media (max-width: 600px) {
+      #empAdminView .btn {
+        font-size: 0.9rem !important;
+        padding: 10px 14px !important;
+        border-radius: 12px !important;
+      }
+
+      /* Specifically target the big action buttons */
+      #empAdminView .primary-btn,
+      #empAdminView .danger-btn {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 12px !important;
+        font-size: 1rem !important;
+        border-radius: 12px !important;
+      }
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .readonly-field {
+      padding: 8px;
+      background: var(--bg-2);
+      border: 1px solid var(--border-1);
+      border-radius: 6px;
+    }
+
+    .empty-note {
+      padding: 10px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .bank-accounts-view {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .bank-header-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .bank-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .bank-filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .bank-main-row {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .table-wrapper {
+      max-height: 260px;
+      /* scrollable on mobile */
+      overflow: auto;
+      border-radius: 10px;
+      border: 1px solid var(--border-1);
+      background: var(--bg-2);
+    }
+
+    .table.bank-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+
+    .table.bank-table th,
+    .table.bank-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border-1);
+      white-space: nowrap;
+    }
+
+    .table.bank-table th {
+      text-align: left;
+      font-weight: 600;
+    }
+
+    .table.bank-table tbody tr:hover {
+      background: var(--bg-1);
+      cursor: pointer;
+    }
+
+    .table.bank-table tbody tr.selected {
+      background: var(--accent-soft, rgba(255, 255, 255, 0.06));
+    }
+
+    .bank-detail-card {
+      padding: 12px;
+      border-radius: 12px;
+      background: var(--bg-2);
+      border: 1px solid var(--border-1);
+    }
+
+    .loading-note,
+    .empty-note {
+      padding: 8px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Desktop: table + form side-by-side */
+    @media (min-width: 900px) {
+      .bank-header-row {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .bank-main-row {
+        flex-direction: row;
+        align-items: flex-start;
+      }
+
+      .table-wrapper {
+        flex: 3;
+        max-height: 420px;
+      }
+
+      .bank-detail-card {
+        flex: 2;
+        margin-left: 12px;
+      }
+    }
+
+    .simple-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 0.9rem;
+    }
+
+    .simple-table th,
+    .simple-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border-1);
+      text-align: left;
+    }
+
+    .simple-table thead th {
+      background: var(--bg-2);
+      font-weight: 600;
+    }
+
+    .simple-table tbody tr {
+      cursor: pointer;
+    }
+
+    .simple-table tbody tr:hover {
+      background: var(--bg-2);
+    }
+
+    .overlay-busy {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .overlay-content {
+      padding: 16px 24px;
+      border-radius: 10px;
+      background: var(--bg-1);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      font-weight: 500;
+    }
+
+    .dw-overview-cards {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .dw-overview-cards .card {
+      flex: 1 1 150px;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-1);
+      background: var(--bg-2);
+    }
+
+    .card-label {
+      font-size: 0.8rem;
+      opacity: 0.8;
+      margin-bottom: 4px;
+    }
+
+    .card-value {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .dw-matrix-placeholder {
+      margin-top: 8px;
+      font-size: 0.85rem;
+      opacity: 0.7;
+    }
+
+    /* Tabs + filters tighten up a bit */
+    .dw-main .tabs-row {
+      margin-bottom: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .dw-main .dw-filters {
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .dw-main .dw-filters {
+      display: flex;
+    }
+
+    .dw-main .dw-filters .select,
+    .dw-main .dw-filters .input {
+      flex: 1 1 140px;
+      min-width: 120px;
+    }
+
+
+    /* Card feel for DW panels */
+    .dw-card {
+      border: 1px solid var(--border-1);
+      border-radius: 10px;
+      padding: 14px 16px;
+      background: var(--bg-2);
+    }
+
+    /* Form layout: label left, field right, tidy spacing */
+    .dw-form-grid {
+      display: grid;
+      grid-template-columns: 140px minmax(0, 1fr);
+      gap: 8px 14px;
+      align-items: center;
+    }
+
+    .dw-form-grid label {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    .dw-form-grid .full {
+      grid-column: 1 / -1;
+    }
+
+    /* Recall column uses single column on small width */
+    .dw-recall-grid {
+      display: grid;
+      grid-template-columns: 120px minmax(0, 1fr);
+      gap: 8px 12px;
+      align-items: center;
+    }
+
+    /* Buttons group */
+    .dw-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-start;
+      margin-top: 4px;
+    }
+
+    .dw-inline {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Make sure it works on mobile */
+    @media (max-width: 768px) {
+
+      .dw-form-grid,
+      .dw-recall-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .dw-form-grid label,
+      .dw-recall-grid label {
+        margin-top: 4px;
+      }
+    }
+
+    .dw-new.two-col {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    @media (min-width: 900px) {
+      .dw-new.two-col {
+        flex-direction: row;
+        align-items: flex-start;
+      }
+
+      .dw-new .dw-card {
+        flex: 1;
+      }
+    }
+
+    /* Reduce click-cursor on non-click rows (matrix) */
+    .dw-matrix-wrapper .simple-table tbody tr {
+      cursor: default;
+    }
+
+    /* Bank table hover only where it's actually selectable */
+    .table.bank-table tbody tr {
+      cursor: pointer;
+    }
+
+    .allowed-apps-box {
+      max-height: 180px;
+      overflow-y: auto;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: var(--bg-2, #0f172a);
+    }
+
+    .allowed-app-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 0;
+      font-size: 0.82rem;
+      color: var(--text);
+    }
+
+    .allowed-app-row input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* ============================
+   BANK DW OVERVIEW (DARK THEME)
+   ============================ */
+
+    /* Main overview and summary tables */
+    .dw-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      background: var(--bg-2);
+      border: 1px solid var(--border-1);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    
+    .dw-table thead th {
+      background: #020617;
+      padding: 8px 8px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border-1);
+    }
+    
+    .dw-table tbody td {
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border-1);
+      color: var(--text);
+    }
+    
+    .dw-table tbody tr:nth-child(even) {
+      background: rgba(15, 23, 42, 0.7);
+    }
+    
+    .dw-table tbody tr:hover {
+      background: rgba(37, 99, 235, 0.22);
+    }
+    
+    .dw-table td.text-right {
+      text-align: right;
+    }
+    
+    /* Summary block title */
+    .mt-4 h4 {
+      margin-top: 16px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    
+    /* Bank × Account matrix inside DW Overview */
+    .dw-matrix-wrapper {
+      margin-top: 14px;
+    }
+    
+    .dw-matrix-wrapper .simple-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--bg-2);
+      border: 1px solid var(--border-1);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    
+    .dw-matrix-wrapper .simple-table th,
+    .dw-matrix-wrapper .simple-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border-1);
+      font-size: 0.82rem;
+    }
+    
+    .dw-matrix-wrapper .simple-table thead th {
+      background: #020617;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    
+    .dw-matrix-wrapper .simple-table tbody tr:nth-child(even) {
+      background: rgba(15, 23, 42, 0.7);
+    }
+    
+    .dw-matrix-wrapper .simple-table tbody tr:hover {
+      background: rgba(15, 23, 42, 0.9);
+      cursor: default;
+    }
+    
+    .dw-matrix-wrapper td strong {
+      font-weight: 700;
+    }
+    
+    /* Keep empty-note consistent with dark theme */
+    .empty-note {
+      padding: 10px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Deposit / Withdraw list – highlight VOID rows */
+    .simple-table .row-void {
+      background: rgba(248, 113, 113, 0.10);
+      color: #fecaca;
+    }
+    
+    .simple-table .row-void td {
+      text-decoration: line-through;
+    }
+
+
+  </style>
+</head>
+
+<body>
+  <div id="app" class="app">
+
+    <div v-if="globalBusy" class="overlay-busy">
+      <div class="overlay-content">
+        Processing…
+        <div style="font-size: 0.8rem; opacity: 0.8;">Please wait</div>
+      </div>
+    </div>
+
+
+    <!-- LOGIN VIEW -->
+    <div v-if="currentView === 'login'" class="view active">
+      <div>
+        <div class="title">Login</div>
+        <div class="subtitle">Sign in with your username and 4-digit PIN</div>
+      </div>
+
+      <!-- Username field -->
+      <div class="field-group">
+        <label class="field-label" for="usernameInput">Username</label>
+        <input id="usernameInput" class="input" autocomplete="username" spellcheck="false" v-model.trim="username"
+          @keyup.enter="focusPin" />
+      </div>
+
+      <!-- Hidden PIN input for keyboard + numpad -->
+      <input id="pinInput" class="hidden-input" inputmode="numeric" autocomplete="one-time-code" maxlength="4"
+        type="password" v-model="pin" />
+
+      <div class="field-group">
+        <div class="field-label">PIN</div>
+        <div class="pin-dots" @click="focusPin">
+          <div v-for="n in 4" :key="n" class="dot" :class="{ filled: pin.length >= n }"></div>
+        </div>
+      </div>
+
+      <div id="status" class="status" :class="statusType">
+        {{ statusMessage }}
+      </div>
+
+      <div class="numpad">
+        <button class="btn" @click="pressDigit('1')">1</button>
+        <button class="btn" @click="pressDigit('2')">2</button>
+        <button class="btn" @click="pressDigit('3')">3</button>
+
+        <button class="btn" @click="pressDigit('4')">4</button>
+        <button class="btn" @click="pressDigit('5')">5</button>
+        <button class="btn" @click="pressDigit('6')">6</button>
+
+        <button class="btn" @click="pressDigit('7')">7</button>
+        <button class="btn" @click="pressDigit('8')">8</button>
+        <button class="btn" @click="pressDigit('9')">9</button>
+
+        <button class="btn btn-secondary" @click="clearPin(true)">CLR</button>
+        <button class="btn" @click="pressDigit('0')">0</button>
+        <button class="btn btn-icon" @click="backspace">⌫</button>
+      </div>
+
+      <div class="footer-row">
+        <button class="btn btn-main" style="flex: 1" @click="login" :disabled="loading">
+          <span v-if="!loading">Login</span>
+          <span v-else>Checking…</span>
+        </button>
+      </div>
+
+      <div class="app-label">Powered by Bugcatto · v.3 All rights reserved 2025</div>
+    </div>
+
+    <!-- APP SELECTION VIEW -->
+    <div v-if="currentView === 'apps'" class="view active" id="appView">
+      <div class="app-header">
+        <div class="app-hello">
+          Hello, <span>{{ employee ? employee.name : '' }}</span>
+        </div>
+        <div class="app-role">
+          {{ employee ? employee.role : '' }} · Level
+          <span>{{ employee ? employee.accessLevel : '' }}</span>
+        </div>
+
+
+        <!-- right side: Back (for subviews later) + Logout -->
+        <div style="display:flex; gap:6px; align-items:center;">
+          <button id="backBtn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; display:none;"
+            disabled>
+            ⟵ Back
+          </button>
+          <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" @click="logout">
+            Logout
+          </button>
+        </div>
+      </div>
+
+      <div class="top-switch" id="appHint">
+        Choose what you want to work on
+      </div>
+
+      <div class="app-layout">
+        <div id="appListSection">
+          <div id="appList" class="app-list">
+            <div v-for="app in apps" :key="app.appId" class="app-card"
+              :style="appClickable(app) ? '' : 'opacity:0.6; cursor:not-allowed;'" @click="handleAppClick(app)">
+              <div class="app-name">{{ app.name }}</div>
+              <div class="app-meta">
+                <span>{{ app.category || 'App' }}</span>
+                <div style="display:flex; gap:4px;">
+                  <span class="chip">{{ app.category || 'General' }}</span>
+                  <span class="chip chip-level">≥ L{{ app.minAccessLevel }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="app-label" v-if="!apps.length">
+            No apps available for your access level.
+          </div>
+          <div class="app-label" v-else>
+            Only apps you’re allowed to use are shown here.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== POS (SPA) ===================== -->
+    <div v-if="currentView === 'pos'" class="view active" id="posView">
+      <h2 style="margin:6px 0 4px;">POS (SPA View)</h2>
+      <p style="font-size:0.85rem; color:var(--muted); margin-top:0;">
+        This is a placeholder for the POS screen.
+      </p>
+      <button class="btn btn-secondary" style="margin-top:10px;" @click="backToApps">
+        ⟵ Back to Apps
+      </button>
+    </div>
+    <!-- ===================== End POS (SPA) ===================== -->
+
+    <!-- ===================== ADMIN VIEW (SPA) ===================== -->
+    <div v-if="currentView === 'empAdmin'" class="view active" id="empAdminView">
+      <div class="app-header" style="margin-bottom:6px;">
+        <div>
+          <div class="app-hello">Employee Management & Access Control</div>
+          <div class="app-role" style="margin-top:2px;">
+            Manage access, status and roles for all employees.
+          </div>
+        </div>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <button class="btn btn-secondary" style="padding:6px 12px; font-size:0.8rem;" @click="startNewEmployee"
+            :disabled="empSaving || empLoading">
+            + New
+          </button>
+          <button class="btn btn-secondary" style="padding:6px 12px; font-size:0.8rem;" @click="loadEmployees"
+            :disabled="empLoading">
+            {{ empLoading ? 'Refreshing…' : 'Reload' }}
+          </button>
+          <button class="btn btn-secondary" style="padding:6px 12px; font-size:0.8rem;" @click="backToApps">
+            ⟵ Back
+          </button>
+        </div>
+      </div>
+
+      <!-- Search / filter -->
+      <div class="field-group" style="margin-top:4px;">
+        <label class="field-label">Search employees</label>
+        <input class="input" placeholder="Search by name, username, phone or email" v-model.trim="empSearch" />
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;" class="emp-layout">
+        <!-- List -->
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:0.75rem; color:var(--muted); margin-bottom:4px;">
+            {{ filteredEmployees.length }} employee(s) found
+          </div>
+
+          <div style="max-height:260px; overflow:auto; border-radius:12px;
+                              border:1px solid rgba(148,163,184,0.35);">
+            <table style="width:100%; border-collapse:collapse; font-size:0.8rem;">
+              <thead style="background:#020617; position:sticky; top:0; z-index:1;">
+                <tr>
+                  <th style="padding:6px 8px; text-align:left;">Name</th>
+                  <th style="padding:6px 8px; text-align:left;">Username</th>
+                  <th style="padding:6px 8px; text-align:left;">Role</th>
+                  <th style="padding:6px 8px; text-align:left;">Status</th>
+                  <th style="padding:6px 8px; text-align:right;">Level</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="emp in filteredEmployees" :key="emp.employeeId || emp.rowIndex" :style="{
+                              background: selectedEmployee && selectedEmployee.employeeId === emp.employeeId
+                                ? 'rgba(59,130,246,0.12)'
+                                : 'transparent',
+                              cursor: 'pointer'
+                            }" @click="selectEmployee(emp)">
+                  <td style="padding:6px 8px; border-top:1px solid rgba(31,41,55,0.8);">
+                    {{ emp.name || '(no name)' }}
+                  </td>
+                  <td style="padding:6px 8px; border-top:1px solid rgba(31,41,55,0.8);">
+                    {{ emp.username || '—' }}
+                  </td>
+                  <td style="padding:6px 8px; border-top:1px solid rgba(31,41,55,0.8);">
+                    {{ emp.role || '—' }}
+                  </td>
+                  <td style="padding:6px 8px; border-top:1px solid rgba(31,41,55,0.8);">
+                    <span :style="{
+                                padding: '2px 6px',
+                                borderRadius: '999px',
+                                fontSize: '0.7rem',
+                                background: emp.status === 'active'
+                                  ? 'rgba(34,197,94,0.18)'
+                                  : emp.status === 'probation'
+                                  ? 'rgba(234,179,8,0.18)'
+                                  : 'rgba(248,113,113,0.18)',
+                                color: emp.status === 'active'
+                                  ? '#bbf7d0'
+                                  : emp.status === 'probation'
+                                  ? '#fde68a'
+                                  : '#fecaca'
+                              }">
+                      {{ (emp.status || '').toUpperCase() || 'UNKNOWN' }}
+                    </span>
+                  </td>
+                  <td style="padding:6px 8px; border-top:1px solid rgba(31,41,55,0.8); text-align:right;">
+                    {{ emp.accessLevel ?? '—' }}
+                  </td>
+                </tr>
+
+                <tr v-if="!filteredEmployees.length">
+                  <td colspan="5" style="padding:10px 8px; text-align:center; color:var(--muted);">
+                    No employees match this search.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Detail / edit panel -->
+        <div style="flex:1; min-width:0; border-radius:14px; border:1px solid rgba(148,163,184,0.3);
+                            padding:10px;">
+          <div v-if="!selectedEmployee">
+            <div style="font-size:0.9rem; margin-bottom:4px;">Select an employee</div>
+            <p style="font-size:0.8rem; color:var(--muted); margin:0;">
+              Choose someone from the list to edit their role, status, access level or reset PIN.
+            </p>
+          </div>
+
+          <div v-else>
+            <div style="font-size:0.9rem; font-weight:500; margin-bottom:4px;">
+              {{ selectedEmployeeDraft.name || '(no name yet)' }}
+            </div>
+            <div style="font-size:0.75rem; color:var(--muted); margin-bottom:8px;">
+              ID: {{ selectedEmployee.employeeId || '(new employee)' }}
+            </div>
+
+            <!-- Row 1: Name / Username -->
+            <div class="emp-form-row">
+              <div class="emp-col">
+                <div class="field-label">Name</div>
+                <input class="input" v-model="selectedEmployeeDraft.name" placeholder="Full name" />
+              </div>
+              <div class="emp-col">
+                <div class="field-label">Username</div>
+                <input class="input" v-model="selectedEmployeeDraft.username" placeholder="Login username" />
+              </div>
+            </div>
+
+            <!-- Row 2: Phone / Email -->
+            <div class="emp-form-row">
+              <div class="emp-col">
+                <div class="field-label">Phone</div>
+                <input class="input" v-model="selectedEmployeeDraft.phone" placeholder="Phone" />
+              </div>
+              <div class="emp-col">
+                <div class="field-label">Email</div>
+                <input class="input" v-model="selectedEmployeeDraft.email" placeholder="Email" />
+              </div>
+            </div>
+
+            <!-- Row 3: Role / Status / Level -->
+            <div class="emp-form-row">
+              <div class="emp-col">
+                <div class="field-label">Role</div>
+                <input class="input" v-model="selectedEmployeeDraft.role" placeholder="e.g. POS Staff, Manager" />
+              </div>
+              <div class="emp-col">
+                <div class="field-label">Status</div>
+                <select class="input" style="padding-right:28px;" v-model="selectedEmployeeDraft.status">
+                  <option value="active">Active</option>
+                  <option value="probation">Probation</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="suspended">Suspended</option>
+                </select>
+              </div>
+              <div style="flex:0 0 90px;">
+                <div class="field-label">Access Level</div>
+                <input class="input" type="number" min="0" v-model.number="selectedEmployeeDraft.accessLevel" />
+              </div>
+            </div>
+
+            <!-- Row 4: Allowed Apps enable now-->
+                    <div class="field-group">
+                      <div class="field-label">Allowed Apps</div>
+                    
+                      <div class="allowed-apps-box">
+                        <div class="allowed-app-row" v-for="app in allApps" :key="app.appId">
+                          <input type="checkbox" :value="app.appId.toUpperCase()" v-model="selectedEmployeeDraft.allowedApps">
+                          <label>{{ app.name }} ({{ app.appId }})</label>
+                        </div>
+                      </div>
+                    
+                      <div class="hint">
+                        Leave all unchecked → access controlled by Access Level
+                      </div>
+                    </div> 
+                    
+                    
+
+
+            <!-- Row 5: New PIN + reset lock -->
+            <div class="emp-form-row">
+              <div class="emp-col">
+                <div class="field-label">Set / Change PIN (optional)</div>
+                <input class="input" v-model="selectedEmployeeDraft.newPin" placeholder="4-digit PIN or leave blank" />
+              </div>
+              <div class="emp-col" style="display:flex; align-items:flex-end; gap:6px;">
+                <input type="checkbox" id="resetLockChk" v-model="selectedEmployeeDraft.resetLock"
+                  style="width:14px; height:14px;" />
+                <label for="resetLockChk" class="field-label" style="margin:0;">
+                  Reset lock / failed attempts
+                </label>
+              </div>
+            </div>
+
+            <!-- Row 6: Failed attempts / Lock status -->
+            <div class="emp-form-row">
+              <div class="emp-col">
+                <div class="field-label">Failed attempts</div>
+                <input class="input" disabled :value="selectedEmployee.failedAttempts ?? 0" />
+              </div>
+              <div class="emp-col">
+                <div class="field-label">Lock status</div>
+                <input class="input" disabled :value="selectedEmployee.isLockedNow
+                            ? ('Locked until ' + (selectedEmployee.lockedUntil || ''))
+                            : 'Not locked'" />
+              </div>
+            </div>
+
+            <!-- Row 7: Buttons -->
+            <div class="emp-form-row" style="margin-top:12px;">
+              <button class="btn btn-main" style="flex:1 1 140px; font-size:0.9rem; padding:10px 0;"
+                @click="saveEmployeeChanges" :disabled="empSaving">
+                {{ empSaving ? 'Saving…' : (selectedEmployee.employeeId ? 'Save changes' : 'Create employee') }}
+              </button>
+
+              <button class="btn btn-secondary" style="flex:1 1 120px; font-size:0.85rem; padding:10px 0;"
+                @click="resetEmployeePin" :disabled="empSaving || !selectedEmployee.employeeId">
+                Reset PIN
+              </button>
+            </div>
+
+            <div style="margin-top:8px; font-size:0.75rem; color:var(--muted);">
+              Changes affect future logins immediately. PIN reset will generate a new PIN and (later)
+              can be sent to the employee via phone or email.
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    <!-- ===================== End ADMIN VIEW (SPA) ===================== -->
+    <!-- ===================== Start Income Expense (SPA) ===================== -->
+    <div v-if="currentView === 'incomeExpense'" class="view active income-expense-view">
+      <!-- Header -->
+      <div class="view-header">
+        <button class="btn ghost" @click="backToApps">← Apps</button>
+        <h2>Income & Expense</h2>
+      </div>
+
+      <!-- Tabs -->
+      <div class="ie-tabs">
+        <button class="tab" :class="{ active: ieTab === 'overview' }" @click="ieTab = 'overview'">
+          Overview
+        </button>
+
+        <button class="tab" :class="{ active: ieTab === 'new' }" @click="ieTab = 'new'">
+          New Entry
+        </button>
+
+        <button class="tab" :class="{ active: ieTab === 'list' }" @click="ieTab = 'list'">
+          All Transactions
+        </button>
+      </div>
+
+      <!-- Overview (Report Landing) -->
+      <div v-if="ieTab === 'overview'" class="ie-overview">
+
+        <!-- Filters -->
+        <div class="ie-filters">
+          <div class="field">
+            <label class="label">Year</label>
+            <select v-model="ieFilters.year" class="input">
+              <option value="all">All</option>
+              <option v-for="y in ieYears" :key="y" :value="y">{{ y }}</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="label">Month</label>
+            <select v-model="ieFilters.month" class="input">
+              <option value="all">All</option>
+              <option v-for="m in ieMonths" :key="m.value" :value="m.value">
+                {{ m.label }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Loading / empty states -->
+        <div v-if="ieLoading" class="mt-2">Loading…</div>
+        <div v-else-if="ieEntries.length === 0" class="mt-2">
+          No income or expense recorded yet. Use “New Entry” to start.
+        </div>
+
+        <!-- Summary cards -->
+        <div v-else class="ie-summary">
+          <div class="ie-summary-card income">
+            <div class="summary-label">Total Income</div>
+            <div class="summary-value">{{ formatCurrency(ieOverviewTotals.income) }}</div>
+          </div>
+
+          <div class="ie-summary-card expense">
+            <div class="summary-label">Total Expense</div>
+            <div class="summary-value">{{ formatCurrency(ieOverviewTotals.expense) }}</div>
+          </div>
+
+          <div class="ie-summary-card net">
+            <div class="summary-label">Net</div>
+            <div class="summary-value">{{ formatCurrency(ieOverviewTotals.net) }}</div>
+          </div>
+        </div>
+
+      </div>
+
+
+      <!-- New Entry Form -->
+      <div v-if="ieTab === 'new'" class="ie-form">
+        <!-- Recall previous record by ID -->
+        <div class="ie-recall-card">
+          <div class="field-row">
+            <label class="label">Recall by ID</label>
+            <input type="number" min="1" v-model.number="ieRecallId" class="input"
+              placeholder="Enter transaction ID (e.g. 12)" />
+            <button class="btn" @click="loadIeFromId">
+              Load
+            </button>
+          </div>
+          <small class="hint">
+            You can find the ID in the “All Transactions” list (coming next).
+          </small>
+        </div>
+
+        <!-- New Entry form -->
+        <div class="ie-form-card">
+
+          <!-- Row: Nature, Type -->
+          <div class="field-row">
+            <div class="field">
+              <label class="label">Nature<span class="req">*</span></label>
+              <select v-model="ieForm.nature" class="input" :class="{ 'input-error': ieErrors.nature }">
+                <option value="">Select…</option>
+                <option value="Income">Income</option>
+                <option value="Expense">Expense</option>
+              </select>
+              <div v-if="ieErrors.nature" class="error-text">{{ ieErrors.nature }}</div>
+            </div>
+
+            <div class="field">
+              <label class="label">Type<span class="req">*</span></label>
+              <select v-model="ieForm.type" class="input" :class="{ 'input-error': ieErrors.type }">
+                <option value="">Select…</option>
+                <option value="Sales">Sales</option>
+                <option value="Service">Service</option>
+                <option value="Investment">Investment</option>
+              </select>
+              <div v-if="ieErrors.type" class="error-text">{{ ieErrors.type }}</div>
+            </div>
+          </div>
+
+          <!-- Row: Division, Cash/Transfer -->
+          <div class="field-row">
+            <div class="field">
+              <label class="label">Division</label>
+              <select v-model="ieForm.division" class="input">
+                <option value="">Select…</option>
+                <option value="CA">CA</option>
+                <option value="Call">Call</option>
+                <option value="Center">Center</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label class="label">Cash / Transfer</label>
+              <select v-model="ieForm.cashTransfer" class="input">
+                <option value="Cash">Cash</option>
+                <option value="Transfer">Transfer</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Invoice -->
+          <div class="field">
+            <label class="label">Invoice</label>
+            <input v-model="ieForm.invoice" class="input" type="text" placeholder="Invoice number (optional)" />
+          </div>
+
+          <!-- Description -->
+          <div class="field">
+            <label class="label">Description</label>
+            <textarea v-model="ieForm.description" class="input" rows="2"
+              placeholder="Description or details"></textarea>
+          </div>
+
+          <!-- Row: Amount, Remark -->
+          <div class="field-row">
+            <div class="field">
+              <label class="label">Amount<span class="req">*</span></label>
+              <input v-model="ieForm.amount" class="input" :class="{ 'input-error': ieErrors.amount }" type="number"
+                min="0" step="0.01" inputmode="decimal" placeholder="0.00" />
+              <div v-if="ieErrors.amount" class="error-text">{{ ieErrors.amount }}</div>
+            </div>
+
+            <div class="field">
+              <label class="label">Remark</label>
+              <textarea v-model="ieForm.remark" class="input" rows="2" placeholder="Remark (optional)"></textarea>
+            </div>
+          </div>
+
+          <!-- Process button -->
+          <div class="actions">
+            <button class="btn btn-main" @click="handleIeProcessClick">
+              Process
+            </button>
+            <button class="btn ghost" type="button" @click="resetIeForm">
+              Clear
+            </button>
+          </div>
+          <div v-if="ieEditSourceId" class="info-banner">
+            Creating corrected entry for ID {{ ieEditSourceId }}.
+            Previous entry will be marked as VOID.
+          </div>
+
+
+        </div>
+      </div>
+
+
+      <!-- Full List View -->
+      <div v-if="ieTab === 'list'" class="ie-list">
+
+        <!-- Filters row -->
+        <div class="ie-filters list-filters">
+          <div class="field">
+            <label class="label">Nature</label>
+            <select v-model="ieFilters.nature" class="input">
+              <option value="all">All</option>
+              <option value="income">Income only</option>
+              <option value="expense">Expense only</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="label">Year</label>
+            <select v-model="ieFilters.year" class="input">
+              <option value="all">All</option>
+              <option v-for="y in ieYears" :key="y" :value="y">{{ y }}</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="label">Month</label>
+            <select v-model="ieFilters.month" class="input">
+              <option value="all">All</option>
+              <option v-for="m in ieMonths" :key="m.value" :value="m.value">
+                {{ m.label }}
+              </option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="label">Search</label>
+            <input v-model="ieFilters.search" class="input" type="text"
+              placeholder="Search ID, invoice, description…" />
+          </div>
+        </div>
+
+        <!-- Loading / empty -->
+        <div v-if="ieLoading" class="mt-2">Loading…</div>
+        <div v-else-if="ieFilteredListEntries.length === 0" class="mt-2">
+          No transactions match the filters.
+        </div>
+
+        <!-- Table view (desktop/tablet) -->
+        <div v-else class="ie-table-wrapper">
+          <table class="ie-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Date</th>
+                <th>Nature</th>
+                <th>Type</th>
+                <th>Division</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="entry in ieFilteredListEntries" :key="entry.entryId"
+                :class="{ 'row-void': entry.status && entry.status.toUpperCase() === 'VOID' }">
+                <td>{{ entry.entryId }}</td>
+                <td>{{ formatDateShort(entry.timestamp) }}</td>
+                <td>{{ entry.nature }}</td>
+                <td>{{ entry.type }}</td>
+                <td>{{ entry.division }}</td>
+                <td style="text-align:right;">
+                  {{ formatCurrency(entry.amount) }}
+                </td>
+                <td>
+                  <span v-if="entry.status && entry.status.toUpperCase() === 'VOID'">VOID</span>
+                  <span v-else>ACTIVE</span>
+                </td>
+                <td>{{ entry.description || entry.remark }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+
+    </div>
+    <!-- ===================== END Income Expense (SPA) ===================== -->
+
+    <!-- ===================== BANK ACCOUNTS APP ===================== -->
+      <div v-if="currentView === 'bankAccounts'" class="bank-main">
+
+      <header class="topbar">
+        <h1>Bank Accounts</h1>
+        <button class="btn small" @click="backToApps">Back</button>
+      </header>
+
+      <!-- Tabs -->
+      <div class="tabs-row">
+        <!-- DW Overview tab -->
+        <button :class="['tab-btn', bankTab==='dwOverview' ? 'active' : '']"
+          @click="bankTab='dwOverview'; if (!bankDwOverviewRows.length) loadBankDwOverview();">
+          DW Overview
+        </button>
+
+
+        <!-- Bank Accounts tab -->
+        <button :class="['tab-btn', bankTab==='accounts' ? 'active' : '']" @click="bankTab='accounts'">
+          Bank Accounts
+        </button>
+      
+        <!-- Bank Master tab -->
+        <button :class="['tab-btn', bankTab==='master' ? 'active' : '']" @click="bankTab='master'">
+          Bank Master
+        </button>
+      </div>
+
+
+
+      <!-- inside bankAccounts view -->
+      <div v-if="bankTab === 'dwOverview'">
+        <div v-if="bankDwOverviewLoading" class="loading-note">Loading overview…</div>
+      
+        <div v-else>
+          <h3 class="text-sm font-semibold mb-2">Deposit / Withdraw Overview</h3>
+
+          <div class="filter-row dw-filters mb-2">
+            <select v-model="bankDwFilter.bunit" class="select small">
+              <option value="all">All Units</option>
+              <option value="SDG">SDG</option>
+              <option value="247">247</option>
+            </select>
+          </div>
+
+
+          <div class="mt-4" v-if="bankDwMatrix.accounts.length && bankDwMatrix.banks.length">
+            <h4 class="text-xs font-semibold mb-1">
+              Bank × Account Matrix (All Units)
+            </h4>
+          
+            <table class="dw-table">
+              <thead>
+                <tr>
+                  <th>Account</th>
+                  <th v-for="b in bankDwMatrix.banks" :key="b">
+                    {{ b }}
+                  </th>
+                  <th>Total (Row)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="acc in bankDwMatrix.accounts" :key="acc">
+                  <td>{{ acc }}</td>
+                  <td v-for="b in bankDwMatrix.banks" :key="b">
+                    {{ formatCurrency(
+                    bankDwMatrix.balances[acc] && bankDwMatrix.balances[acc][b] || 0
+                    ) }}
+                  </td>
+                  <td><strong>{{ formatCurrency(bankDwMatrix.rowTotals[acc] || 0) }}</strong></td>
+                </tr>
+          
+                <!-- Column totals + system total -->
+                <tr>
+                  <td><strong>Total (Column)</strong></td>
+                  <td v-for="b in bankDwMatrix.banks" :key="b">
+                    <strong>{{ formatCurrency(bankDwMatrix.colTotals[b] || 0) }}</strong>
+                  </td>
+                  <td><strong>{{ formatCurrency(bankDwMatrix.systemTotal || 0) }}</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          
+            <p class="hint">
+              Totals are net balances (Deposit − Withdraw) for all units, with VOID and promo entries excluded by backend.
+            </p>
+          </div>
+
+      
+          <table class="dw-table">
+            <thead>
+              <tr>
+                <th>Bank</th>
+                <th>Account</th>
+                <th>Bunit</th>
+                <th>Deposit</th>
+                <th>Withdraw</th>
+                <th>Net</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in bankDwFilteredRows" :key="row.bankAccount + '|' + row.selectBankAccount + '|' + (row.bunit || '')">
+
+                <td>{{ row.bankAccount }}</td>
+                <td>{{ row.selectBankAccount }}</td>
+                <td>{{ row.bunit || '(GLOBAL)' }}</td>
+                <td class="text-right">{{ formatCurrency(row.deposit) }}</td>
+                <td class="text-right">{{ formatCurrency(row.withdraw) }}</td>
+                <td class="text-right">{{ formatCurrency(row.net) }}</td>
+              </tr>
+              <tr v-if="!bankDwOverviewRows.length">
+                <td colspan="6" class="empty-note">No deposit/withdraw data yet.</td>
+              </tr>
+            </tbody>
+          </table>
+      
+          <div class="mt-4">
+            <h4 class="text-xs font-semibold mb-1">Summary by Business Unit</h4>
+            <table class="dw-table">
+              <thead>
+                <tr>
+                  <th>Bunit</th>
+                  <th>Deposit</th>
+                  <th>Withdraw</th>
+                  <th>Net</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in bankDwSummaryForView" :key="row.bunit || '(GLOBAL)'">
+
+                  <td>{{ row.bunit || '(GLOBAL)' }}</td>
+                  <td class="text-right">{{ formatCurrency(row.deposit) }}</td>
+                  <td class="text-right">{{ formatCurrency(row.withdraw) }}</td>
+                  <td class="text-right">{{ formatCurrency(row.net) }}</td>
+                </tr>
+                <tr v-if="!bankDwOverviewSummary.length">
+                  <td colspan="4" class="empty-note">No summary yet.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    
+
+
+      <!-- -------- TAB 1: BANK ACCOUNTS -------- -->
+      <div v-if="bankTab === 'accounts'" class="bank-accounts-view">
+
+        <!-- Top actions + filters -->
+        <div class="bank-header-row">
+          <div class="bank-actions">
+            <button class="btn small" @click="startNewBankAccount()">+ New Account</button>
+            <button class="btn small" @click="loadBankAccounts()">Reload</button>
+          </div>
+
+          <div class="bank-filters">
+            <select v-model="bankFilters.status" class="select small">
+              <option value="all">All</option>
+              <option value="Active">Active</option>
+              <option value="Closed">Closed</option>
+            </select>
+          
+            <select v-model="bankFilters.bunit" class="select small">
+              <option value="all">All Units</option>
+              <option value="(GLOBAL)">Global only</option>
+              <option value="SDG">SDG</option>
+              <option value="247">247</option>
+            </select>
+          
+            <input v-model="bankFilters.search" class="input small" placeholder="Search account / user / NRC / phone…" />
+          </div>
+
+        </div>
+
+        <div v-if="bankLoading" class="loading-note">Loading accounts…</div>
+
+        <!-- Main row: table + detail -->
+        <div v-else class="bank-main-row">
+          <!-- Table view -->
+          <div class="table-wrapper">
+            <table class="table bank-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Bank</th>
+                  <th>User</th>
+                  <th>Status</th>
+                  <th>Account No.</th>
+                  <th>Bunit</th>
+                  <th>Opened</th>
+                  <th>Closed</th>
+                </tr>
+              </thead>
+            
+              <tbody>
+                <tr v-for="acc in filteredBankAccounts" :key="acc.no" @click="selectBankAccount(acc)">
+            
+                  <td>{{ acc.no }}</td>
+                  <td>{{ acc.accountType }}</td>
+                  <td>{{ acc.accountUserName }}</td>
+                  <td>{{ acc.status }}</td>
+                  <td>{{ acc.accountNumber }}</td>
+                  <td>{{ acc.bunit || '(GLOBAL)' }}</td>
+                  <td>{{ acc.openingDate ? formatDateShort(acc.openingDate) : '' }}</td>
+                  <td>{{ acc.closedDate ? formatDateShort(acc.closedDate) : '' }}</td>
+            
+                </tr>
+              </tbody>
+            </table>
+
+          </div>
+
+          <!-- Detail / edit card -->
+          <div class="bank-detail-card">
+            <h2 v-if="bankSelected">Account #{{ bankDraft.no }}</h2>
+            <h2 v-else>New Account</h2>
+
+            <div class="form-grid">
+              <label>Account Type</label>
+              <select v-model="bankDraft.accountType">
+                <option disabled value="">-- select --</option>
+                <option v-for="b in bankMaster" :key="b.bankName" :value="b.bankName">
+                  {{ b.bankName }}
+                </option>
+              </select>
+
+              <label>Account User Name</label>
+              <select v-model="bankDraft.accountUserName">
+                <option disabled value="">-- select --</option>
+                <option v-for="emp in employees" :key="emp.employeeId" :value="emp.name">
+                  {{ emp.name }}
+                </option>
+              </select>
+
+              <label>Business unit</label>
+              <select v-model="bankDraft.bunit">
+                <option value="">Global (all units)</option>
+                <option value="SDG">SDG</option>
+                <option value="247">247</option>
+              </select>
+
+
+              <label>Status</label>
+              <select v-model="bankDraft.status">
+                <option>Active</option>
+                <option>Closed</option>
+              </select>
+
+              <label>Account Number</label>
+              <input v-model="bankDraft.accountNumber" />
+
+              <label>NRC</label>
+              <input v-model="bankDraft.nrc" />
+
+              <label>Register Phone</label>
+              <input v-model="bankDraft.registerPhoneNumber" />
+
+              <label>Opening Date</label>
+              <div class="readonly-field">
+                {{ bankSelected && bankSelected.openingDate ? formatDateShort(bankSelected.openingDate) : '-' }}
+              </div>
+
+              <label>Closed Date</label>
+              <div class="readonly-field">
+                {{ bankSelected && bankSelected.closedDate ? formatDateShort(bankSelected.closedDate) : '-' }}
+              </div>
+
+              <div class="full">
+                <button class="btn primary" :disabled="bankSaving" @click="saveBankAccount">
+                  {{ bankSaving ? 'Saving…' : 'Save Account' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+
+      <!-- -------- TAB 2: BANK MASTER -------- -->
+      <div v-if="bankTab === 'master'" class="bank-master-view">
+
+        <!-- LEFT: Bank List -->
+        <div class="list-panel">
+          <div class="panel-actions">
+            <button class="btn" @click="loadBankMaster()">Reload</button>
+          </div>
+
+          <table class="simple-table">
+            <thead>
+              <tr>
+                <th style="width: 70%;">Bank / Wallet</th>
+                <th style="width: 30%;">Type</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="b in bankMaster" :key="b.bankName"
+                @click="bankMasterDraft.bankName = b.bankName; bankMasterDraft.type = b.type;">
+                <td>{{ b.bankName }}</td>
+                <td>{{ b.type }}</td>
+              </tr>
+
+              <tr v-if="!bankMaster.length">
+                <td colspan="2" class="empty-note">
+                  No bank types yet.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+
+        <!-- RIGHT: Add/Edit Bank Type -->
+        <div class="detail-panel">
+          <h2>Add or Edit Bank Type</h2>
+
+          <div class="form-grid">
+
+            <label>Bank Name</label>
+            <input v-model="bankMasterDraft.bankName" />
+
+            <label>Type</label>
+            <select v-model="bankMasterDraft.type">
+              <option>Bank</option>
+              <option>Mobile Wallet</option>
+            </select>
+
+            <div class="full">
+              <button class="btn primary" :disabled="bankMasterSaving" @click="saveBankMaster">
+                {{ bankMasterSaving ? 'Saving…' : 'Save Bank Type' }}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- ===================== END BANK ACCOUNTS APP ===================== -->
+
+    <!-- ===================== DEPOSIT / WITHDRAW APP ===================== -->
+    <div v-if="currentView === 'depositWithdraw'" class="dw-main">
+      <header class="topbar">
+        <h1>Deposit & Withdraw</h1>
+        <button class="btn small" @click="backToApps">Back</button>
+        <button class="btn small ghost" @click="refreshDwData" :disabled="dwLoading">
+          ⟳ Refresh
+        </button>
+        <small v-if="dwLastLoadedAt" class="muted">
+          Last updated: {{ formatDateTime(dwLastLoadedAt) }}
+        </small>
+      </header>
+
+      <!-- Tabs -->
+      <div class="tabs-row">
+        <button :class="['tab-btn', dwTab === 'overview' ? 'active' : '']" @click="setDwTab('overview')">
+          Overview
+        </button>
+        <button :class="['tab-btn', dwTab === 'list' ? 'active' : '']" @click="setDwTab('list')">
+          All Transactions
+        </button>
+        <button :class="['tab-btn', dwTab === 'new' ? 'active' : '']" @click="setDwTab('new')">
+          New / Fix
+        </button>
+      </div>
+
+
+      <!-- Shared filters (affect Overview + List) -->
+      <div class="filter-row dw-filters">
+        <!-- Year -->
+        <select v-model="dwFilters.year" class="select small">
+          <option value="all">All Years</option>
+          <option v-for="y in dwYears" :key="y" :value="y">{{ y }}</option>
+        </select>
+
+        <!-- Month -->
+        <select v-model="dwFilters.month" class="select small">
+          <option value="all">All Months</option>
+          <option v-for="m in dwMonths" :key="m.value" :value="m.value">
+            {{ m.label }}
+          </option>
+        </select>
+
+        <!-- Day -->
+        <select v-model="dwFilters.day" class="select small">
+          <option value="all">All Days</option>
+          <option v-for="d in 31" :key="d" :value="d">{{ d }}</option>
+        </select>
+
+        <!-- Nature -->
+        <select v-model="dwFilters.nature" class="select small">
+          <option value="all">All</option>
+          <option value="Deposit">Deposit</option>
+          <option value="Withdraw">Withdraw</option>
+        </select>
+
+        <!-- Promotion filter -->
+        <select v-model="dwFilters.promotion" class="select small">
+          <option value="exclude">Exclude promo</option>
+          <option value="include">Include promo</option>
+          <option value="only">Promo only</option>
+        </select>
+
+        <!-- Status Filter -->
+        <select v-model="dwFilters.status" class="select small">
+          <option value="all">All</option>
+          <option value="active">Active only</option>
+        </select>
+
+
+        <!-- Search -->
+        <input v-model="dwFilters.search" class="input small" placeholder="Search…" />
+      </div>
+
+      <!-- ================= OVERVIEW TAB ================= -->
+      <div v-if="dwTab === 'overview'" class="dw-overview">
+
+
+        <!-- Simple totals cards for now -->
+        <div class="dw-overview-cards">
+          <div class="card">
+            <div class="card-label">Total Deposit</div>
+            <div class="card-value">
+              {{ formatCurrency(dwOverviewTotals.deposit) }}
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-label">Total Withdraw</div>
+            <div class="card-value">
+              {{ formatCurrency(dwOverviewTotals.withdraw) }}
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-label">Net</div>
+            <div class="card-value">
+              {{ formatCurrency(dwOverviewTotals.net) }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Placeholder for future matrix (step 3) -->
+        <!-- Existing overview matrix stays as is -->
+        
+        <!-- New: summary by business unit (only on main DW app) -->
+        <div v-if="!dwCurrentBunit" class="mt-4">
+          <h3 class="text-sm font-semibold mb-2">Summary by Business Unit</h3>
+          <table class="dw-table">
+            <thead>
+              <tr>
+                <th>Bunit</th>
+                <th>Deposit</th>
+                <th>Withdraw</th>
+                <th>Net</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in dwOverviewByBunit" :key="row.bunit">
+                <td>{{ row.bunit }}</td>
+                <td class="text-right">{{ formatNumber(row.deposit) }}</td>
+                <td class="text-right">{{ formatNumber(row.withdraw) }}</td>
+                <td class="text-right">{{ formatNumber(row.net) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Bank × Account Matrix -->
+        <div class="dw-matrix-wrapper" v-if="dwMatrix.accounts.length && dwMatrix.banks.length">
+          <table class="simple-table">
+            <thead>
+              <tr>
+                <th>Account</th>
+                <th v-for="b in dwMatrix.banks" :key="b">
+                  {{ b }}
+                </th>
+                <th>Total (Row)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="acc in dwMatrix.accounts" :key="acc">
+                <td>{{ acc }}</td>
+                <td v-for="b in dwMatrix.banks" :key="b">
+                  {{ formatCurrency(dwMatrix.balances[acc] && dwMatrix.balances[acc][b] || 0) }}
+                </td>
+                <td><strong>{{ formatCurrency(dwMatrix.rowTotals[acc] || 0) }}</strong></td>
+              </tr>
+
+              <!-- Column totals + system total -->
+              <tr>
+                <td><strong>Total (Column)</strong></td>
+                <td v-for="b in dwMatrix.banks" :key="b">
+                  <strong>{{ formatCurrency(dwMatrix.colTotals[b] || 0) }}</strong>
+                </td>
+                <td><strong>{{ formatCurrency(dwMatrix.systemTotal || 0) }}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="hint">
+            Balances exclude promotion entries and VOID corrections.
+            Filters (Year / Month / Day / Nature) are applied.
+          </p>
+        </div>
+
+        <div v-else class="empty-note">
+          No accounts or banks yet to show balance overview.
+        </div>
+
+      </div>
+
+      <!-- ================= LIST TAB ================= -->
+      <div v-if="dwTab === 'list'" class="dw-list">
+        <div v-if="dwLoading">Loading…</div>
+
+        <table v-if="!dwLoading" class="simple-table">
+          <thead>
+            <tr>
+              <th style="width: 12%;">Date</th>
+              <th style="width: 8%;">ID</th>
+              <th style="width: 10%;">Nature</th>
+              <th style="width: 15%;">Bank</th>
+              <th style="width: 15%;">Account</th>
+              <th style="width: 15%;">User Account</th>
+              <th style="width: 10%;">Amount</th>
+              <th style="width: 8%;">Status</th>
+              <th style="width: 10%;">Corr. Of</th>
+              <th style="width: 7%;">Promo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="e in dwFilteredListEntries" :key="e.entryId"
+              :class="{ 'row-void': (e.status || '').toUpperCase() === 'VOID' }">
+              <td>{{ formatDateShort(e.timestamp) }}</td>
+              <td>{{ e.entryId }}</td>
+              <td>{{ e.nature }}</td>
+              <td>{{ e.bankAccount }}</td>
+              <td>{{ e.selectBankAccount }}</td>
+              <td>{{ e.userAccountName }}</td>
+              <td>{{ formatCurrency(e.amount) }}</td>
+        
+              <!-- Status column -->
+              <td>
+                <span v-if="(e.status || '').toUpperCase() === 'VOID'">VOID</span>
+                <span v-else>ACTIVE</span>
+              </td>
+        
+              <!-- Correction history (like IE) -->
+              <td>{{ e.sourceEntryId || '' }}</td>
+        
+              <!-- Promo flag -->
+              <td>
+                <span v-if="e.promotion">✔</span>
+              </td>
+            </tr>
+        
+            <tr v-if="!dwFilteredListEntries.length">
+              <td colspan="10" class="empty-note">
+                No transactions for current filters.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+
+      <!-- ================= NEW / FIX TAB ================= -->
+      <div v-if="dwTab === 'new'" class="dw-new two-col">
+
+        <!-- LEFT: Form -->
+        <div class="detail-panel dw-card">
+          <h2>New / Fix Transaction</h2>
+
+          <div class="form-grid dw-form-grid">
+            <!-- Row 1 -->
+            <label>Nature</label>
+            <select v-model="dwForm.nature">
+              <option>Deposit</option>
+              <option>Withdraw</option>
+            </select>
+
+            <!-- Row 2 -->
+            <label>Bank Account</label>
+            <select v-model="dwForm.bankAccount">
+              <option disabled value="">-- select bank --</option>
+              <option v-for="b in bankMaster" :key="b.bankName" :value="b.bankName">
+                {{ b.bankName }}
+              </option>
+            </select>
+
+            <!-- Row 3 -->
+            <label>Select Bank Account</label>
+            <select v-model="dwForm.selectBankAccount">
+              <option disabled value="">-- select account --</option>
+              <option v-for="acc in dwAvailableAccounts" :key="acc.no" :value="acc.accountUserName">
+                {{ acc.accountUserName }}
+              </option>
+            </select>
+
+            <!-- Row 4 -->
+            <label>User Account Name</label>
+            <input v-model="dwForm.userAccountName" />
+
+            <!-- Row 5 -->
+            <label>Amount</label>
+            <input v-model="dwForm.amount" type="number" min="0" step="0.01" />
+
+            <!-- Row 6 -->
+            <label>Promotion</label>
+            <div class="dw-inline">
+              <input type="checkbox" v-model="dwForm.promotion" />
+              <span class="hint">Exclude from bank balance</span>
+            </div>
+
+            <!-- Row 7 -->
+            <label>Comment / Remark</label>
+            <textarea v-model="dwForm.comment" rows="2"></textarea>
+
+            <!-- Buttons -->
+            <div class="full dw-actions">
+              <button class="btn primary" :disabled="dwSaving" @click="handleDwProcessClick">
+                {{ dwSaving ? 'Processing…' : 'Process' }}
+              </button>
+              <button class="btn ghost" type="button" @click="resetDwForm">
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Recall -->
+        <div class="list-panel dw-card">
+          <h2>Recall by EntryId</h2>
+          <div class="form-grid dw-recall-grid">
+            <label>EntryId</label>
+            <input v-model="dwRecallId" type="number" min="1" />
+            <div class="full dw-actions">
+              <button class="btn" type="button" @click="loadDwFromId">
+                Load
+              </button>
+            </div>
+            <p class="hint">
+              This will load an existing entry into the form for correction.
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <!-- ================= END DEPOSIT / WITHDRAW APP ===================== -->
+
+
+
+    <!-- Ending -->
+  </div>
+  </div>
+
+  <!-- Vue + App script go here -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script>
+    const ACCESS_CONTROL_URL = "https://script.google.com/macros/s/AKfycbyQzYKOuP-5aYo6AjAilXwbEBYSWgRWrPFDJqcqxKvCdyU9aKh0jUIGe4TFglHtxGpDnA/exec";
+    const MAX_LENGTH = 4;
+
+    const { createApp } = Vue;
+
+    createApp({
+      data() {
+        return {
+          currentView: "login",   // 'login' | 'apps' | 'pos' | 'empAdmin'
+          username: "",
+          pin: "",
+          statusMessage: "Type username, then PIN using the keypad",
+          statusType: "muted",   // 'muted' | 'error' | 'success'
+          loading: false,
+          employee: null,
+          apps: [],
+          globalBusy: false,
+          allApps: [], // list of all apps from app sheet
+
+          // Employee Admin state
+          empLoading: false,
+          empSaving: false,
+          empSearch: "",
+          employees: [],
+          selectedEmployee: null,
+          selectedEmployeeDraft: {
+            name: "",
+            username: "",
+            phone: "",
+            email: "",
+            role: "",
+            status: "active",
+            accessLevel: 3,
+            newPin: "",
+            resetLock: false,
+            allowedApps: [], // array of AppIDs selected for this employee
+
+          },
+
+
+
+          // Income Expense state
+          ieTab: 'overview',
+          ieLoading: false,
+          ieSaving: false,
+          ieEntries: [],
+
+          ieForm: {
+            nature: 'Income',
+            division: '',
+            cashTransfer: 'Cash',
+            invoice: '',
+            type: '',
+            description: '',
+            amount: '',
+            remark: ''
+          },
+
+          ieFilters: {
+            year: 'all',
+            month: 'all',
+            nature: 'all', // all | income | expense  (used in list tab)
+            search: ''     // free text search (list tab)
+          },
+
+          ieErrors: {
+            nature: '',
+            type: '',
+            amount: ''
+          },
+
+          ieRecallId: null,
+          ieEditSourceId: null,
+
+          // --- Bank Accounts & Bank Master state ---
+          bankTab: 'accounts',   // 'dwOverview' | 'accounts' | 'master'
+
+          // Bank Accounts list + selected item
+          bankAccounts: [],
+          bankDwOverviewLoading: false,
+          bankDwOverviewRows: [],
+          bankDwOverviewSummary: [],
+          bankLoading: false,
+          bankSaving: false,
+
+          bankSelected: null,
+          bankDraft: {
+            no: null,
+            accountType: '',
+            accountUserName: '',
+            status: 'Active',
+            accountNumber: '',
+            nrc: '',
+            registerPhoneNumber: '',
+            bunit: ''   // '' = global, or 'SDG', '247', ...
+          },
+
+          // Bank Master list + draft
+          bankMaster: [],
+          bankMasterDraft: {
+            bankName: '',
+            type: 'Bank'
+          },
+          bankMasterSaving: false,
+
+          bankFilters: {
+            status: 'all',     // all | Active | Closed
+            search: '',
+            bunit: 'all'       // all | '(GLOBAL)' | SDG | 247 ..
+          },
+
+          bankDwFilter: {
+            bunit: 'all'    // all | '(GLOBAL)' | SDG | 247
+          },
+
+
+          // --- Deposit & Withdraw state ---
+          dwTab: 'overview',   // 'overview' | 'list' | 'new'
+          dwLoading: false,
+          dwSaving: false,
+          dwEntries: [], 
+          
+
+          dwForm: {
+            nature: 'Deposit',        // Deposit | Withdraw
+            bankAccount: '',          // Bank / wallet name
+            selectBankAccount: '',    // Dependent on bankAccount
+            userAccountName: '',      // External person
+            amount: '',               // input string
+            promotion: false,         // checkbox
+            comment: ''               // remark
+          },
+
+          dwRecallId: null,           // for recall by EntryId
+          dwEditSourceId: null,       // sourceEntryId for corrections
+          dwDataLoaded: false,
+          dwLoading: false,
+
+
+          dwFilters: {
+            year: 'all',
+            month: 'all',
+            day: 'all',
+            nature: 'all',            // all | Deposit | Withdraw
+            bank: 'all',
+            account: 'all',
+            promotion: 'exclude',     // exclude | include | only
+            search: '',
+            status: 'active'             // all | active
+          },
+
+
+          // Which DW app is currently open (for Bunit)
+          dwActiveAppId: '',   // e.g. 'DEPOSIT_WITHDRAW_SDG'
+          dwActiveAppName: '',  // optional, just for showing in UI later
+          dwLastLoadedAt: null,
+
+
+
+
+
+
+          // end of data
+        };
+      },
+      computed: {
+        APP_TO_VIEW() {
+          return {
+            POS: "pos",
+            EMP_ADMIN: "empAdmin",
+            INCOME_EXPENSE: "incomeExpense",
+            BANK_ACCOUNTS: "bankAccounts",
+            DEPOSIT_WITHDRAW: "depositWithdraw"
+          };
+        },
+
+        filteredEmployees() {
+          if (!this.empSearch.trim()) return this.employees;
+          const q = this.empSearch.trim().toLowerCase();
+          return this.employees.filter(emp => {
+            const fields = [
+              emp.name,
+              emp.username,
+              emp.phone,
+              emp.email,
+              emp.employeeId
+            ].map(v => (v || "").toString().toLowerCase());
+            return fields.some(f => f.includes(q));
+          });
+        },
+
+        ieYears() {
+          // unique years from entries, for dropdown
+          const years = new Set();
+          (this.ieEntries || []).forEach(e => {
+            if (!e.timestamp) return;
+            const d = new Date(e.timestamp);
+            if (!isNaN(d)) {
+              years.add(d.getFullYear());
+            }
+          });
+          return Array.from(years).sort((a, b) => b - a); // latest first
+        },
+
+        ieMonths() {
+          // 1–12 with labels
+          return [
+            { value: 1, label: 'Jan' },
+            { value: 2, label: 'Feb' },
+            { value: 3, label: 'Mar' },
+            { value: 4, label: 'Apr' },
+            { value: 5, label: 'May' },
+            { value: 6, label: 'Jun' },
+            { value: 7, label: 'Jul' },
+            { value: 8, label: 'Aug' },
+            { value: 9, label: 'Sep' },
+            { value: 10, label: 'Oct' },
+            { value: 11, label: 'Nov' },
+            { value: 12, label: 'Dec' }
+          ];
+        },
+
+        // Entries used for OVERVIEW totals (ACTIVE only, filtered by year/month)
+        ieFilteredOverviewEntries() {
+          const yearFilter = this.ieFilters.year;
+          const monthFilter = this.ieFilters.month;
+
+          return (this.ieEntries || []).filter(e => {
+            // exclude VOID from overview
+            const status = (e.status || '').toUpperCase();
+            if (status === 'VOID') return false;
+
+            if (!e.timestamp) return true; // keep if no timestamp
+
+            const d = new Date(e.timestamp);
+            if (isNaN(d)) return true;
+
+            const y = d.getFullYear();
+            const m = d.getMonth() + 1;
+
+            if (yearFilter !== 'all' && y !== Number(yearFilter)) return false;
+            if (monthFilter !== 'all' && m !== Number(monthFilter)) return false;
+
+            return true;
+          });
+        },
+
+        // Totals for overview
+        ieOverviewTotals() {
+          let income = 0;
+          let expense = 0;
+
+          this.ieFilteredOverviewEntries.forEach(e => {
+            const amt = Number(e.amount) || 0;
+            const nature = (e.nature || '').toLowerCase();
+            if (nature === 'income') income += amt;
+            else if (nature === 'expense') expense += amt;
+          });
+
+          return {
+            income,
+            expense,
+            net: income - expense
+          };
+        },
+
+        // Entries used for ALL TRANSACTIONS list (includes VOID, with filters)
+        ieFilteredListEntries() {
+          const yearFilter = this.ieFilters.year;
+          const monthFilter = this.ieFilters.month;
+          const natureFilter = this.ieFilters.nature; // all | income | expense
+          const search = (this.ieFilters.search || '').toLowerCase();
+
+          return (this.ieEntries || []).filter(e => {
+            const status = (e.status || '').toUpperCase();
+
+            // 1) nature filter
+            const nature = (e.nature || '').toLowerCase();
+            if (natureFilter === 'income' && nature !== 'income') return false;
+            if (natureFilter === 'expense' && nature !== 'expense') return false;
+
+            // 2) year/month filter
+            if (e.timestamp) {
+              const d = new Date(e.timestamp);
+              if (!isNaN(d)) {
+                const y = d.getFullYear();
+                const m = d.getMonth() + 1;
+                if (yearFilter !== 'all' && y !== Number(yearFilter)) return false;
+                if (monthFilter !== 'all' && m !== Number(monthFilter)) return false;
+              }
+            }
+
+            // 3) search filter (invoice, description, remark, employeeName)
+            if (search) {
+              const haystack = [
+                e.entryId,
+                e.invoice,
+                e.description,
+                e.remark,
+                e.employeeName,
+                e.username,
+                status
+              ]
+                .map(v => (v == null ? '' : String(v)))
+                .join(' ')
+                .toLowerCase();
+              if (!haystack.includes(search)) return false;
+            }
+
+            return true;
+          }).sort((a, b) => {
+            // sort by timestamp desc, then entryId desc
+            const ta = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+            const tb = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+            if (ta !== tb) return tb - ta;
+            return (Number(b.entryId) || 0) - (Number(a.entryId) || 0);
+          });
+        },
+
+        filteredBankAccounts() {
+          let list = [...this.bankAccounts];
+
+          // ----- Bunit filter (optional) -----
+          if (this.bankFilters && this.bankFilters.bunit && this.bankFilters.bunit !== 'all') {
+            const target = this.bankFilters.bunit.toUpperCase();
+            list = list.filter(acc => {
+              const accBunit = (acc.bunit || '').toUpperCase();
+              if (target === '(GLOBAL)') {
+                return !accBunit; // show only accounts with no Bunit
+              }
+              return accBunit === target;
+            });
+          }
+
+          // ----- Status filter -----
+          if (this.bankFilters.status !== 'all') {
+            list = list.filter(acc => (acc.status || '') === this.bankFilters.status);
+          }
+
+          // ----- Search filter -----
+          const q = (this.bankFilters.search || '').toLowerCase().trim();
+          if (q) {
+            list = list.filter(acc => {
+              const fields = [
+                acc.accountType,
+                acc.accountUserName,
+                acc.accountNumber,
+                acc.nrc,
+                acc.registerPhoneNumber,
+                acc.bunit   // include Bunit in search too
+              ].map(v => (v || '').toString().toLowerCase());
+
+              return fields.some(f => f.includes(q));
+            });
+          }
+
+          return list;
+        },
+
+        // Dependent dropdown for Select Bank Account
+        dwAvailableAccounts() {
+          const bank = (this.dwForm.bankAccount || '').trim();
+          if (!bank) return [];
+
+          // Use only accounts allowed for this DW app (Bunit-aware)
+          return (this.dwBankAccountsForCurrentUnit || []).filter(acc => {
+            return (acc.accountType || '').trim() === bank &&
+              (acc.status || '').trim() === 'Active';
+          });
+        },
+
+
+        
+
+        // dd compte
+
+
+        dwYears() {
+          const years = new Set();
+          (this.dwEntries || []).forEach(e => {
+            if (!e.timestamp) return;
+            const d = new Date(e.timestamp);
+            if (!isNaN(d)) years.add(d.getFullYear());
+          });
+          return Array.from(years).sort((a, b) => b - a);
+        },
+
+        dwMonths() {
+          return [
+            { value: 1, label: 'Jan' },
+            { value: 2, label: 'Feb' },
+            { value: 3, label: 'Mar' },
+            { value: 4, label: 'Apr' },
+            { value: 5, label: 'May' },
+            { value: 6, label: 'Jun' },
+            { value: 7, label: 'Jul' },
+            { value: 8, label: 'Aug' },
+            { value: 9, label: 'Sep' },
+            { value: 10, label: 'Oct' },
+            { value: 11, label: 'Nov' },
+            { value: 12, label: 'Dec' }
+          ];
+        },
+
+        // Filtered list for "All transactions" tab (we'll use in UI later)
+        dwFilteredListEntries() {
+          const {
+            year,
+            month,
+            day,
+            nature,
+            bank,
+            account,
+            promotion,
+            search,
+            status: statusFilter
+          } = this.dwFilters;
+          const currentBunit = (this.dwCurrentBunit || '').toUpperCase();
+
+          return (this.dwEntries || []).filter(e => {
+            const status = (e.status || '').toUpperCase();
+
+            // Bunit filter (only if we have a unit)
+            if (currentBunit) {
+              const rowBunit = (e.bunit || '').toUpperCase();
+              if (rowBunit !== currentBunit) return false;
+            }
+
+            // Nature filter
+            if (nature !== 'all' && e.nature !== nature) return false;
+
+            // Bank filter
+            if (bank !== 'all' && e.bankAccount !== bank) return false;
+
+            // Account filter
+            if (account !== 'all' && e.selectBankAccount !== account) return false;
+
+            // Promotion filter
+            if (promotion === 'exclude' && e.promotion) return false;
+            if (promotion === 'only' && !e.promotion) return false;
+            // 'include' => no special filter
+
+            // Date filter
+            if (e.timestamp) {
+              const d = new Date(e.timestamp);
+              if (!isNaN(d)) {
+                const y = d.getFullYear();
+                const m = d.getMonth() + 1;
+                const dd = d.getDate();
+                if (year !== 'all' && y !== Number(year)) return false;
+                if (month !== 'all' && m !== Number(month)) return false;
+                if (day !== 'all' && dd !== Number(day)) return false;
+              }
+            }
+
+            // Search filter
+            const q = (search || '').toLowerCase().trim();
+            if (q) {
+              const hay = [
+                e.entryId,
+                e.bankAccount,
+                e.selectBankAccount,
+                e.userAccountName,
+                e.comment,
+                e.processedBy,
+                status
+              ].map(v => (v == null ? '' : String(v))).join(' ').toLowerCase();
+              if (!hay.includes(q)) return false;
+            }
+            // Status filter (hide VOID when dropdown = 'active')
+            if (statusFilter === 'active' && status === 'VOID') {
+              return false;
+            }
+
+            return true;
+          }).sort((a, b) => {
+            const ta = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+            const tb = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+            if (ta !== tb) return tb - ta;
+            return (b.entryId || 0) - (a.entryId || 0);
+          });
+        },
+
+        dwOverviewTotals() {
+          let deposit = 0;
+          let withdraw = 0;
+
+          (this.dwFilteredListEntries || []).forEach(e => {
+            const status = (e.status || '').toUpperCase();
+            if (status === 'VOID') return;   // skip voided entries
+
+            const amt = Number(e.amount) || 0;
+            if (e.nature === 'Deposit') {
+              deposit += amt;
+            } else if (e.nature === 'Withdraw') {
+              withdraw += amt;
+            }
+          });
+
+          return {
+            deposit,
+            withdraw,
+            net: deposit - withdraw
+          };
+        },
+
+
+
+
+
+          
+        dwMatrix() {
+            const currentBunit = (this.dwCurrentBunit || '').toUpperCase();
+            // Use only entries for this Bunit (if any)
+            const entries = (this.dwEntries || []).filter(e => {
+              if (!currentBunit) return true;
+              const rowBunit = (e.bunit || '').toUpperCase();
+              return rowBunit === currentBunit;
+            });
+
+          const { year, month, day, nature } = this.dwFilters;
+        // ...
+
+
+          // 1) Collect banks
+          const bankSet = new Set();
+          (this.bankMaster || []).forEach(b => {
+            if (b.bankName) bankSet.add(b.bankName);
+          });
+          entries.forEach(e => {
+            if (e.bankAccount) bankSet.add(e.bankAccount);
+          });
+          const banks = Array.from(bankSet).sort();
+
+          // 2) Collect accounts (from Bank Accounts first, fallback to DW entries)
+          const accountSet = new Set();
+          if (this.bankAccounts && this.bankAccounts.length) {
+            this.bankAccounts.forEach(acc => {
+              if (acc.accountUserName) accountSet.add(acc.accountUserName);
+            });
+          } else {
+            entries.forEach(e => {
+              if (e.selectBankAccount) accountSet.add(e.selectBankAccount);
+            });
+          }
+          const accounts = Array.from(accountSet).sort();
+
+          // 3) Init balances[account][bank] = 0
+          const balances = {};
+          accounts.forEach(a => {
+            balances[a] = {};
+            banks.forEach(bName => {
+              balances[a][bName] = 0;
+            });
+          });
+
+          // 4) Fill from entries with filters:
+          //    - ACTIVE only
+          //    - exclude promotion
+          //    - respect year/month/day + nature
+          entries.forEach(e => {
+            if (!e) return;
+            const status = (e.status || '').toUpperCase();
+            if (status === 'VOID') return;
+            if (e.promotion) return; // promo never counted in bank balance
+
+            const bankName = (e.bankAccount || '').trim();
+            const accName = (e.selectBankAccount || '').trim();
+            if (!bankName || !accName) return;
+
+            // date filter
+            if (e.timestamp) {
+              const d = new Date(e.timestamp);
+              if (!isNaN(d)) {
+                const y = d.getFullYear();
+                const m = d.getMonth() + 1;
+                const dd = d.getDate();
+                if (year !== 'all' && y !== Number(year)) return;
+                if (month !== 'all' && m !== Number(month)) return;
+                if (day !== 'all' && dd !== Number(day)) return;
+              }
+            }
+
+            // nature filter
+            if (nature !== 'all' && e.nature !== nature) return;
+
+            const amt = Number(e.amount) || 0;
+            const sign = e.nature === 'Withdraw' ? -1 : 1;
+            const delta = sign * amt;
+
+            if (!balances[accName]) {
+              balances[accName] = {};
+              banks.forEach(bName2 => { balances[accName][bName2] = 0; });
+            }
+            if (!(bankName in balances[accName])) {
+              // bank not in header yet (just in case)
+              bankSet.add(bankName);
+              balances[accName][bankName] = 0;
+            }
+
+            balances[accName][bankName] += delta;
+          });
+
+          // If new banks appeared mid-loop, rebuild banks array (rare)
+          const finalBanks = Array.from(bankSet).sort();
+
+          // 5) Build row totals + col totals + system total
+          const rowTotals = {};
+          const colTotals = {};
+          finalBanks.forEach(b => { colTotals[b] = 0; });
+
+          accounts.forEach(a => {
+            let rowSum = 0;
+            finalBanks.forEach(b => {
+              const v = balances[a] && typeof balances[a][b] === 'number'
+                ? balances[a][b]
+                : 0;
+              rowSum += v;
+              colTotals[b] += v;
+            });
+            rowTotals[a] = rowSum;
+          });
+
+          let systemTotal = 0;
+          finalBanks.forEach(b => { systemTotal += colTotals[b]; });
+
+          return {
+            banks: finalBanks,
+            accounts,
+            balances,
+            rowTotals,
+            colTotals,
+            systemTotal
+          };
+        },
+
+
+        dwCurrentBunit() {
+          const id = (this.dwActiveAppId || '').toUpperCase();
+          const prefix = 'DEPOSIT_WITHDRAW_';
+
+          // If this is a multi-unit DW app (DEPOSIT_WITHDRAW_SDG, etc.)
+          if (id.startsWith(prefix) && id.length > prefix.length) {
+            return id.substring(prefix.length); // 'SDG', '247', ...
+          }
+
+          // Base app or not set -> no Bunit filter (show all)
+          return '';
+        },
+
+        dwOverviewByBunit() {
+          // Only meaningful in main DW app (no specific Bunit)
+          if (this.dwCurrentBunit) {
+            return []; // in SDG / 247 app, we can hide this widget
+          }
+
+          const byBunit = {};
+
+          for (const e of (this.dwEntries || [])) {
+            const status = (e.status || '').toUpperCase();
+            if (status === 'VOID') continue;
+
+            const bunit = (e.bunit || '').toUpperCase() || '(GLOBAL)';
+
+            if (!byBunit[bunit]) {
+              byBunit[bunit] = {
+                bunit,
+                deposit: 0,
+                withdraw: 0,
+                net: 0
+              };
+            }
+
+            const amt = Number(e.amount) || 0;
+
+            if (e.nature === 'Deposit') {
+              byBunit[bunit].deposit += amt;
+              byBunit[bunit].net += amt;
+            } else if (e.nature === 'Withdraw') {
+              byBunit[bunit].withdraw += amt;
+              byBunit[bunit].net -= amt;
+            }
+          }
+
+          return Object.values(byBunit).sort((a, b) => a.bunit.localeCompare(b.bunit));
+        },
+
+
+        dwBankAccountsForCurrentUnit() {
+          const currentBunit = (this.dwCurrentBunit || '').toUpperCase();
+
+          return (this.bankAccounts || []).filter(acc => {
+            const accBunit = (acc.bunit || '').toUpperCase();
+
+            // Global accounts (no Bunit) are visible everywhere
+            if (!accBunit) return true;
+
+            // Base DW app (no Bunit filter) sees everything
+            if (!currentBunit) return true;
+
+            // Otherwise must match
+            return accBunit === currentBunit;
+          });
+        },
+
+        dwBankOptions() {
+          const banks = new Set();
+          (this.dwBankAccountsForCurrentUnit || []).forEach(acc => {
+            if (acc.accountType) banks.add(acc.accountType);
+          });
+          return Array.from(banks).sort();
+        },
+
+        dwAccountOptions() {
+          const accounts = [];
+          const selectedBank = this.dwFilters.bank;
+
+          (this.dwBankAccountsForCurrentUnit || []).forEach(acc => {
+            if (selectedBank === 'all' || acc.accountType === selectedBank) {
+              accounts.push(acc.accountUserName);
+            }
+          });
+
+          return Array.from(new Set(accounts)).sort();
+        },
+
+        bankDwMatrix() {
+          const rows = this.bankDwFilteredRows || [];   // 👈 use filtered rows
+
+          if (!rows.length) {
+            return {
+              banks: [],
+              accounts: [],
+              balances: {},
+              rowTotals: {},
+              colTotals: {},
+              systemTotal: 0
+            };
+          }
+
+          // 1) Collect unique banks and accounts
+          const bankSet = new Set();
+          const accountSet = new Set();
+
+          rows.forEach(r => {
+            if (r.bankAccount) bankSet.add(r.bankAccount);
+            if (r.selectBankAccount) accountSet.add(r.selectBankAccount);
+          });
+
+          const banks = Array.from(bankSet).sort();
+          const accounts = Array.from(accountSet).sort();
+
+          // 2) Init balances[account][bank] = 0
+          const balances = {};
+          accounts.forEach(a => {
+            balances[a] = {};
+            banks.forEach(b => {
+              balances[a][b] = 0;
+            });
+          });
+
+          // 3) Fill from rows – use NET, no filters
+          rows.forEach(r => {
+            const bank = (r.bankAccount || '').trim();
+            const acc = (r.selectBankAccount || '').trim();
+            if (!bank || !acc) return;
+
+            const net = Number(r.net) || 0;
+
+            if (!balances[acc]) {
+              balances[acc] = {};
+              banks.forEach(b => { balances[acc][b] = 0; });
+            }
+            if (balances[acc][bank] == null) {
+              balances[acc][bank] = 0;
+            }
+
+            balances[acc][bank] += net;
+          });
+
+          // 4) Row totals, column totals, system total
+          const rowTotals = {};
+          const colTotals = {};
+          banks.forEach(b => { colTotals[b] = 0; });
+
+          accounts.forEach(acc => {
+            let sum = 0;
+            banks.forEach(b => {
+              const v = balances[acc] && typeof balances[acc][b] === 'number'
+                ? balances[acc][b]
+                : 0;
+              sum += v;
+              colTotals[b] += v;
+            });
+            rowTotals[acc] = sum;
+          });
+
+          let systemTotal = 0;
+          banks.forEach(b => { systemTotal += colTotals[b]; });
+
+          return {
+            banks,
+            accounts,
+            balances,
+            rowTotals,
+            colTotals,
+            systemTotal
+          };
+        },
+
+        bankDwFilteredRows() {
+          const rows = this.bankDwOverviewRows || [];
+          const unit = (this.bankDwFilter && this.bankDwFilter.bunit) || 'all';
+
+          if (unit === 'all') return rows;
+
+          // Normalise: '' → '(GLOBAL)'
+          return rows.filter(r => {
+            const b = (r.bunit || '').toUpperCase();
+            if (unit === '(GLOBAL)') {
+              return !b; // only blank bunit
+            }
+            return b === unit.toUpperCase();
+          });
+        },
+
+        bankDwSummaryForView() {
+          const list = this.bankDwOverviewSummary || [];
+          const unit = (this.bankDwFilter && this.bankDwFilter.bunit) || 'all';
+
+          if (unit === 'all') return list;
+
+          return list.filter(r => {
+            const b = (r.bunit || '').toUpperCase();
+            if (unit === '(GLOBAL)') {
+              return !b;
+            }
+            return b === unit.toUpperCase();
+          });
+        },
+
+
+
+
+        // end of computed
+      },
+
+      methods: {
+        setStatus(msg, type = "muted") {
+          this.statusMessage = msg;
+          this.statusType = type;
+        },
+        focusPin() {
+          const el = document.getElementById("pinInput");
+          if (el) el.focus();
+        },
+        pressDigit(d) {
+          if (this.pin.length >= MAX_LENGTH) return;
+          this.pin = (this.pin || "") + d;
+          this.setStatus("Tap Login to continue", "muted");
+        },
+        backspace() {
+          if (!this.pin) return;
+          this.pin = this.pin.slice(0, -1);
+        },
+        clearPin(showMsg) {
+          this.pin = "";
+          if (showMsg) {
+            this.setStatus("PIN cleared", "muted");
+          }
+        },
+        async login() {
+          const username = this.username.trim();
+          const pin = this.pin.trim();
+
+          if (!username) {
+            this.setStatus("Enter your username", "error");
+            return;
+          }
+          if (pin.length !== MAX_LENGTH) {
+            this.setStatus("Enter your 4-digit PIN", "error");
+            return;
+          }
+
+          this.loading = true;
+          this.setStatus("Checking…", "muted");
+
+          try {
+            const body = new URLSearchParams();
+            body.append("username", username);
+            body.append("pin", pin);
+            body.append("appId", "ACCESS_PORTAL");
+
+            const res = await fetch(ACCESS_CONTROL_URL, {
+              method: "POST",
+              body
+            });
+            const data = await res.json();
+
+            if (!data.ok) {
+              if (["INVALID_LOGIN", "NOT_FOUND", "INVALID_PIN"].includes(data.error)) {
+                if (typeof data.attemptsLeft === "number") {
+                  this.setStatus("Invalid username or PIN. Attempts left: " + data.attemptsLeft, "error");
+                } else {
+                  this.setStatus("Invalid username or PIN", "error");
+                }
+                this.clearPin(false);
+                return;
+              }
+
+              if (["ACCOUNT_INACTIVE", "NOT_ACTIVE"].includes(data.error)) {
+                this.setStatus("Account inactive. Contact admin.", "error");
+                this.clearPin(false);
+                return;
+              }
+
+              if (data.error === "ACCOUNT_LOCKED") {
+                this.setStatus("Account locked. Try again later.", "error");
+                this.clearPin(false);
+                return;
+              }
+
+              if (data.error === "PIN_NOT_UNIQUE") {
+                this.setStatus("PIN conflict. Contact admin.", "error");
+                this.clearPin(false);
+                return;
+              }
+
+              if (data.error === "MISSING_CREDENTIALS") {
+                this.setStatus("Missing username or PIN.", "error");
+                this.clearPin(false);
+                return;
+              }
+
+              this.setStatus("Error: " + data.error, "error");
+              return;
+            }
+
+            this.employee = data.employee || null;
+            this.apps = Array.isArray(data.apps) ? data.apps : [];
+
+            try {
+              localStorage.setItem("employee", JSON.stringify(this.employee));
+              localStorage.setItem("apps", JSON.stringify(this.apps));
+            } catch (e) { }
+
+            this.setStatus("Login successful", "success");
+            this.currentView = "apps";
+          } catch (err) {
+            this.setStatus("Network error, please try again", "error");
+          } finally {
+            this.loading = false;
+          }
+        },
+
+        //active for now
+        async loadAllApps() {
+          try {
+            const body = new URLSearchParams();
+            body.append("username", this.employee?.username || "");
+            body.append("action", "APP_LIST");  // backend endpoint to list apps
+
+            const res = await fetch(ACCESS_CONTROL_URL, { method: "POST", body });
+            const data = await res.json();
+            if (data.ok) {
+              this.allApps = data.apps || [];
+            }
+          } catch (err) {
+            console.error(err);
+          }
+        },
+
+
+        //bunit update
+        appClickable(app) {
+          const appId = (app.appId || '').toUpperCase();
+
+          // direct mapping
+          let hasSpaView = !!this.APP_TO_VIEW[appId];
+
+          // Any DEPOSIT_WITHDRAW_* should still use the DW view
+          if (!hasSpaView && appId.startsWith('DEPOSIT_WITHDRAW')) {
+            hasSpaView = true;
+          }
+
+          const hasUrl = !!(app.url && app.url.trim());
+          return hasSpaView || hasUrl;
+        },
+
+        handleAppClick(app) {
+          if (!this.appClickable(app)) {
+            alert("This app is not configured yet.");
+            return;
+          }
+          this.openApp(app);
+        },
+
+        openApp(app) {
+          if (!this.employee) {
+            this.setStatus("Session expired. Please log in again.", "error");
+            this.currentView = "login";
+            return;
+          }
+
+          const appId = (app.appId || '').toUpperCase();
+
+          // 1) Decide which view
+          let viewKey = this.APP_TO_VIEW[appId];
+
+          // Any appId that starts with DEPOSIT_WITHDRAW -> depositWithdraw view
+          if (!viewKey && appId.startsWith('DEPOSIT_WITHDRAW')) {
+            viewKey = 'depositWithdraw';
+          }
+
+          if (viewKey) {
+            this.currentView = viewKey;
+
+            // lazy-load employees when opening Employee Admin
+            if (viewKey === "empAdmin") {
+
+              // Load all apps BEFORE loading employees
+              if (!this.allApps.length) {
+                this.loadAllApps();
+              }
+
+              // Load employees
+              if (!this.employees.length) {
+                this.loadEmployees();
+              }
+            }
+
+            // Income & Expense app: set default tab + lazy-load entries
+            if (viewKey === "incomeExpense") {
+              this.ieTab = this.ieTab || "overview";
+              if (!this.ieEntries || !this.ieEntries.length) {
+                this.loadIeEntries();
+              }
+            }
+
+            // Bank Accounts Apps
+            if (viewKey === "bankAccounts") {
+              if (!this.bankAccounts.length) {
+                this.loadBankAccounts("BANK_ACCOUNTS"); 
+              }
+              if (!this.bankMaster.length) {
+                this.loadBankMaster("BANK_ACCOUNTS");
+              }
+              if (!this.employees.length) {
+                this.loadEmployees();
+              }
+            }
+
+            // 2) When opening any DW app, remember which appId it is
+            if (viewKey === "depositWithdraw") {
+              this.dwActiveAppId = appId;
+              this.dwActiveAppName = app.name || appId;
+
+              // make sure DW entries/banks are loaded
+              if (!this.dwEntries.length) {
+                this.loadDwEntries();
+              }
+              if (!this.bankAccounts.length) {
+                this.loadBankAccounts(appId);          // 👈 pass the real DW app id
+              }
+              if (!this.bankMaster.length) {
+                this.loadBankMaster(appId); // use the real DW app id
+              }
+            }
+
+
+            return;
+          }
+
+          const url = (app.url || "").trim();
+          if (url) {
+            window.location.href = url;
+            return;
+          }
+
+          alert("This app is not wired yet.");
+        },
+
+
+
+        backToApps() {
+          this.currentView = "apps";
+        },
+        logout() {
+          this.employee = null;
+          this.apps = [];
+          try {
+            localStorage.removeItem("employee");
+            localStorage.removeItem("apps");
+          } catch (e) { }
+          this.username = "";
+          this.pin = "";
+          this.currentView = "login";
+          this.setStatus("Type username, then PIN using the keypad", "muted");
+        },
+        restoreSession() {
+          try {
+            const emp = localStorage.getItem("employee");
+            const apps = localStorage.getItem("apps");
+            if (emp && apps) {
+              this.employee = JSON.parse(emp);
+              this.apps = JSON.parse(apps);
+              this.currentView = "apps";
+              return;
+            }
+          } catch (e) { }
+          this.currentView = "login";
+        },
+        async loadEmployees() {
+          if (!this.employee) {
+            this.setStatus("Session expired. Please log in again.", "error");
+            this.currentView = "login";
+            return;
+          }
+
+          this.empLoading = true;
+          try {
+            const body = new URLSearchParams();
+            body.append("action", "EMP_LIST");
+            body.append("adminUsername", this.employee.username || "");
+            // optional filters – for now keep it simple
+            // body.append("status", "all");
+            // body.append("q", this.empSearch || "");
+
+            const res = await fetch(ACCESS_CONTROL_URL, {
+              method: "POST",
+              body
+            });
+
+            const data = await res.json();
+
+            if (!data.ok) {
+              alert("Error loading employees: " + (data.error || "UNKNOWN"));
+              return;
+            }
+
+            // backend returns employees: [{ employeeId, name, username, phone, email, role, status, accessLevel, failedAttempts, lockedUntil, isLockedNow }]
+            this.employees = Array.isArray(data.employees) ? data.employees : [];
+
+            // auto-select first entry if nothing selected
+            if (this.employees.length && !this.selectedEmployee) {
+              this.selectEmployee(this.employees[0]);
+            }
+          } catch (err) {
+            console.error(err);
+            alert("Network error while loading employees.");
+          } finally {
+            this.empLoading = false;
+          }
+        },
+
+        //load income expense entries
+        async loadIeEntries() {
+          if (!this.employee) {
+            this.setStatus("Session expired. Please log in again.", "error");
+            this.currentView = "login";
+            return;
+          }
+
+          this.ieLoading = true;
+          try {
+            const body = new URLSearchParams();
+            body.append("action", "IE_LIST");
+            body.append("username", this.employee.username || "");
+
+            const res = await fetch(ACCESS_CONTROL_URL, {
+              method: "POST",
+              body
+            });
+
+            const data = await res.json();
+
+            if (!data.ok) {
+              alert("Error loading income/expense entries: " + (data.error || "UNKNOWN"));
+              this.ieEntries = [];
+              return;
+            }
+
+            this.ieEntries = Array.isArray(data.entries) ? data.entries : [];
+          } catch (err) {
+            console.error(err);
+            alert("Network error while loading income/expense entries.");
+            this.ieEntries = [];
+          } finally {
+            this.ieLoading = false;
+          }
+        },
+
+
+
+        selectEmployee(emp) {
+          this.selectedEmployee = { ...emp };
+
+          const allowedList = (emp.allowedApps || "")
+            .split(",")
+            .map(a => a.trim())
+            .filter(a => a);
+
+          this.selectedEmployeeDraft = {
+            name: emp.name || "",
+            username: emp.username || "",
+            phone: emp.phone || "",
+            email: emp.email || "",
+            role: emp.role || "",
+            status: emp.status || "active",
+            accessLevel: emp.accessLevel || 3,
+            newPin: "",
+            resetLock: false,
+            allowedApps: allowedList // <--- added
+          };
+        },
+
+
+        async saveEmployeeChanges() {
+          if (!this.selectedEmployee) return;
+
+          this.empSaving = true;
+          this.globalBusy = true;
+
+          try {
+            const isNew = !this.selectedEmployee.employeeId;
+
+            const payload = {
+              employeeId: this.selectedEmployee.employeeId || "",
+              name: this.selectedEmployeeDraft.name || "",
+              username: this.selectedEmployeeDraft.username || "",
+              phone: this.selectedEmployeeDraft.phone || "",
+              email: this.selectedEmployeeDraft.email || "",
+              role: this.selectedEmployeeDraft.role || "",
+              status: this.selectedEmployeeDraft.status || "active",
+              accessLevel: this.selectedEmployeeDraft.accessLevel,
+              newPin: this.selectedEmployeeDraft.newPin || "",
+              resetLock: this.selectedEmployeeDraft.resetLock || false,
+              allowedApps: this.selectedEmployeeDraft.allowedApps.join(",") // <--- added
+            };
+
+
+            const body = new URLSearchParams();
+            body.append("action", "EMP_SAVE");
+            body.append("adminUsername", (this.employee && this.employee.username) || "");
+            body.append("employeeJson", JSON.stringify(payload));
+
+            const res = await fetch(ACCESS_CONTROL_URL, {
+              method: "POST",
+              body
+            });
+
+            const data = await res.json();
+
+            if (!data.ok) {
+              if (data.error === "VALIDATION_ERROR" && data.fieldErrors) {
+                console.error("Validation errors:", data.fieldErrors);
+                alert("Validation error. Check console for details.");
+              } else {
+                alert("Error saving changes: " + (data.error || "UNKNOWN"));
+              }
+              return;
+            }
+
+            const saved = data.employee;
+
+            // ✅ Reload full list from backend so everything is in sync
+            await this.loadEmployees();
+
+            // Try to re-select the saved employee by employeeId
+            if (saved && saved.employeeId) {
+              const found = this.employees.find(e => e.employeeId === saved.employeeId);
+              if (found) {
+                this.selectEmployee(found);
+              }
+            }
+
+            alert(isNew ? "Employee created." : "Changes saved.");
+
+          } catch (err) {
+            console.error(err);
+            alert("Network error while saving changes.");
+          } finally {
+            this.empSaving = false;
+            this.globalBusy = false;
+          }
+        },
+
+
+
+
+        async resetEmployeePin() {
+          if (!this.selectedEmployee) return;
+
+          if (!confirm("Reset PIN for " + (this.selectedEmployee.name || "this employee") + "?")) {
+            return;
+          }
+
+          this.empSaving = true;
+          try {
+            const body = new URLSearchParams();
+            body.append("action", "EMP_RESET_PIN");
+            body.append("adminUsername", this.employee.username || "");
+            body.append("employeeId", this.selectedEmployee.employeeId);
+
+            const res = await fetch(ACCESS_CONTROL_URL, {
+              method: "POST",
+              body
+            });
+
+            const data = await res.json();
+
+            if (!data.ok) {
+              if (data.error === "VALIDATION_ERROR" && data.fieldErrors) {
+                console.error("Validation errors:", data.fieldErrors);
+              }
+              alert("Error resetting PIN: " + (data.error || "UNKNOWN"));
+              return;
+            }
+
+            // backend returns { ok: true, employeeId, newPin }
+            // For now, just show it in alert. Later you can remove this and send by SMS/email.
+            alert("PIN has been reset. New PIN: " + data.newPin);
+          } catch (err) {
+            console.error(err);
+            alert("Network error while resetting PIN.");
+          } finally {
+            this.empSaving = false;
+          }
+        },
+        startNewEmployee() {
+          this.selectedEmployee = {
+            employeeId: "",
+            name: "",
+            username: "",
+            phone: "",
+            email: "",
+            role: "",
+            status: "active",
+            accessLevel: 3,
+            failedAttempts: 0,
+            lockedUntil: null
+          };
+          this.selectedEmployeeDraft = {
+            name: "",
+            username: "",
+            phone: "",
+            email: "",
+            role: "",
+            status: "active",
+            accessLevel: 3,
+            newPin: "",
+            resetLock: false
+          };
+        },
+
+        // income and expense method
+        resetIeForm() {
+          this.ieForm = {
+            nature: 'Income',
+            division: '',
+            cashTransfer: 'Cash',
+            invoice: '',
+            type: '',
+            description: '',
+            amount: '',
+            remark: ''
+          };
+          this.ieErrors = { nature: '', type: '', amount: '' };
+          this.ieEditSourceId = null;  // clear edit source
+        },
+
+        validateIeForm() {
+          const errors = { nature: '', type: '', amount: '' };
+
+          if (!this.ieForm.nature) {
+            errors.nature = 'Nature is required';
+          }
+
+          if (!this.ieForm.type) {
+            errors.type = 'Type is required';
+          }
+
+          const amountNum = Number(this.ieForm.amount);
+          if (!isFinite(amountNum) || amountNum <= 0) {
+            errors.amount = 'Amount must be greater than 0';
+          }
+
+          this.ieErrors = errors;
+
+          // return true if no errors
+          return !errors.nature && !errors.type && !errors.amount;
+        },
+
+        async handleIeProcessClick() {
+          if (!this.employee) {
+            this.setStatus("Session expired. Please log in again.", "error");
+            this.currentView = "login";
+            return;
+          }
+
+          // validate required fields
+          if (!this.validateIeForm()) {
+            return;
+          }
+
+          this.ieSaving = true;
+          this.globalBusy = true;
+
+          try {
+            const payload = {
+              nature: this.ieForm.nature,
+              division: this.ieForm.division,
+              cashTransfer: this.ieForm.cashTransfer,
+              invoice: this.ieForm.invoice,
+              type: this.ieForm.type,
+              description: this.ieForm.description,
+              amount: this.ieForm.amount,   // backend will Number() it
+              remark: this.ieForm.remark,
+              sourceEntryId: this.ieEditSourceId || null
+            };
+
+            const body = new URLSearchParams();
+            body.append("action", "IE_SAVE");
+            body.append("username", this.employee.username || "");
+            body.append("entryJson", JSON.stringify(payload));
+
+            const res = await fetch(ACCESS_CONTROL_URL, {
+              method: "POST",
+              body
+            });
+
+            const data = await res.json();
+
+            if (!data.ok) {
+              if (data.error === "VALIDATION_ERROR" && data.fieldErrors) {
+                this.ieErrors = {
+                  ...this.ieErrors,
+                  ...data.fieldErrors
+                };
+                alert("Validation error. Please check required fields.");
+              } else {
+                alert("Error saving entry: " + (data.error || "UNKNOWN"));
+              }
+              return;
+            }
+
+            // ✅ Always reload from backend so list & overview are fresh
+            await this.loadIeEntries();
+
+            alert("Income/expense entry saved.");
+            this.resetIeForm();
+            // stay on current tab
+
+          } catch (err) {
+            console.error(err);
+            alert("Network error while saving entry.");
+          } finally {
+            this.ieSaving = false;
+            this.globalBusy = false;
+          }
+        },
+
+
+
+        loadIeFromId() {
+          const id = Number(this.ieRecallId);
+          if (!isFinite(id) || id <= 0) {
+            alert("Please enter a valid ID number.");
+            return;
+          }
+
+          if (!this.ieEntries || !this.ieEntries.length) {
+            alert("No records loaded yet.");
+            return;
+          }
+
+          const entry = this.ieEntries.find(e => Number(e.entryId) === id);
+
+          if (!entry) {
+            alert("No record found for this ID.");
+            return;
+          }
+
+          // if it's VOID already, warn user
+          if (entry.status && entry.status.toUpperCase() === 'VOID') {
+            if (!confirm("This entry is already VOID. Do you still want to use it as a template for a new correction?")) {
+              return;
+            }
+          }
+
+          // Map entry back into the form
+          this.ieForm.nature = entry.nature || "";
+          this.ieForm.division = entry.division || "";
+          this.ieForm.cashTransfer = entry.cashTransfer || "Cash";
+          this.ieForm.invoice = entry.invoice || "";
+          this.ieForm.type = entry.type || "";
+          this.ieForm.description = entry.description || "";
+          this.ieForm.amount = entry.amount != null ? String(entry.amount) : "";
+          this.ieForm.remark = entry.remark || "";
+
+          // remember which entry we are correcting
+          this.ieEditSourceId = entry.entryId;
+
+          // clear previous errors
+          this.ieErrors = { nature: "", type: "", amount: "" };
+        },
+
+        formatCurrency(value) {
+          const n = Number(value);
+          if (!isFinite(n)) return '0.00';
+          return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        },
+
+        formatNumber(value) {
+          const n = Number(value);
+          if (!isFinite(n)) return '0';
+          return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
+        },
+
+
+        formatDateShort(ts) {
+          if (!ts) return '';
+          const d = new Date(ts);
+          if (isNaN(d)) return ts;
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${y}-${m}-${day}`;
+        },
+
+        async loadBankAccounts(caller) {
+          if (!this.employee) return;
+
+          // Auto-pick caller if not provided
+          if (!caller) {
+            caller = (this.currentView === "bankAccounts") ? "BANK_ACCOUNTS" : (this.dwActiveAppId || "DEPOSIT_WITHDRAW");
+          }
+
+          try {
+            const body = new URLSearchParams();
+            body.append("action", "BANK_LIST");
+            body.append("username", this.employee.username || "");
+            body.append("caller", caller);
+
+            const res = await fetch(ACCESS_CONTROL_URL, { method: "POST", body });
+            const data = await res.json();
+
+            if (!data.ok) {
+              alert("Error loading bank accounts: " + (data.error || "UNKNOWN"));
+              this.bankAccounts = [];
+              return;
+            }
+
+            this.bankAccounts = Array.isArray(data.accounts) ? data.accounts : [];
+          } catch (err) {
+            console.error(err);
+            alert("Network error while loading bank accounts.");
+            this.bankAccounts = [];
+          }
+        },
+
+
+
+        selectBankAccount(acc) {
+          this.bankSelected = { ...acc };
+
+          this.bankDraft = {
+            no: acc.no || null,
+            accountType: acc.accountType || '',
+            accountUserName: acc.accountUserName || '',
+            status: acc.status || 'Active',
+            accountNumber: acc.accountNumber || '',
+            nrc: acc.nrc || '',
+            registerPhoneNumber: acc.registerPhoneNumber || '',
+            bunit: acc.bunit || ''           // NEW
+          };
+        },
+
+        startNewBankAccount() {
+          this.bankSelected = null;
+          this.bankDraft = {
+            no: null,
+            accountType: '',
+            accountUserName: '',
+            status: 'Active',
+            accountNumber: '',
+            nrc: '',
+            registerPhoneNumber: '',
+            bunit: ''                        // NEW (global by default)
+          };
+        },
+
+        async saveBankAccount() {
+          if (!this.employee) return;
+
+          // --- Basic required checks ---
+          const accountType = (this.bankDraft.accountType || '').trim();
+          const accountUserName = (this.bankDraft.accountUserName || '').trim();
+          const status = (this.bankDraft.status || '').trim();
+
+          if (!accountType || !accountUserName || !status) {
+            alert("Please select Account Type, Account User Name and Status.");
+            return;
+          }
+
+          // --- Duplicate check against ALL accounts (Active + Closed) ---
+          const currentNo = this.bankDraft.no;
+
+          const dup = this.bankAccounts.find(acc => {
+            return (
+              (acc.accountType || '').trim() === accountType &&
+              (acc.accountUserName || '').trim() === accountUserName &&
+              acc.no !== currentNo // exclude same row when editing
+            );
+          });
+
+          if (dup) {
+            alert(
+              "Duplicate account:\n" +
+              accountUserName + " already has an account for " + accountType +
+              " (No " + dup.no + ", status: " + (dup.status || '') + ")."
+            );
+            return;
+          }
+
+          this.bankSaving = true;
+          this.globalBusy = true;
+
+          try {
+            const payload = {
+              no: this.bankDraft.no,
+              accountType: accountType,
+              accountUserName: accountUserName,
+              status: status,
+              accountNumber: this.bankDraft.accountNumber || '',
+              nrc: this.bankDraft.nrc || '',
+              registerPhoneNumber: this.bankDraft.registerPhoneNumber || '',
+              bunit: (this.bankDraft.bunit || '').trim().toUpperCase()  // NEW
+            };
+
+            const body = new URLSearchParams();
+            body.append("action", "BANK_SAVE");
+            body.append("username", this.employee.username || "");
+            body.append("accountJson", JSON.stringify(payload));
+
+            const res = await fetch(ACCESS_CONTROL_URL, { method: "POST", body });
+            const data = await res.json();
+
+            if (!data.ok) {
+              alert("Error saving account: " + (data.error || "UNKNOWN"));
+              return;
+            }
+
+            const saved = data.account;
+            const savedNo = saved ? saved.no : null;
+
+            // ✅ Always reload from backend to sync data
+            await this.loadBankAccounts(
+              this.currentView === "bankAccounts"
+                ? "BANK_ACCOUNTS"
+                : (this.dwActiveAppId || "DEPOSIT_WITHDRAW")
+            );
+
+
+            // re-select saved account after reload if possible
+            if (savedNo != null) {
+              const found = this.bankAccounts.find(a => a.no === savedNo);
+              if (found) {
+                this.selectBankAccount(found);
+              } else if (this.bankAccounts.length) {
+                this.selectBankAccount(this.bankAccounts[0]);
+              }
+            }
+
+            alert("Bank account saved.");
+
+          } catch (err) {
+            console.error(err);
+            alert("Network error while saving account.");
+          } finally {
+            this.bankSaving = false;
+            this.globalBusy = false;
+          }
+        },
+
+        //new dwview
+
+        async loadBankDwOverview() {
+          if (!this.employee) return;
+
+          this.bankDwOverviewLoading = true;
+          try {
+            const body = new URLSearchParams();
+            body.append("action", "DW_BANK_OVERVIEW");
+            body.append("username", this.employee.username || "");
+
+            const res = await fetch(ACCESS_CONTROL_URL, { method: "POST", body });
+            const data = await res.json();
+
+            if (!data.ok) {
+              alert("Error loading DW overview: " + (data.error || "UNKNOWN"));
+              this.bankDwOverviewRows = [];
+              this.bankDwOverviewSummary = [];
+              return;
+            }
+
+            this.bankDwOverviewRows = Array.isArray(data.rows) ? data.rows : [];
+            this.bankDwOverviewSummary = Array.isArray(data.summaryByBunit) ? data.summaryByBunit : [];
+          } catch (err) {
+            console.error(err);
+            alert("Network error while loading DW overview.");
+            this.bankDwOverviewRows = [];
+            this.bankDwOverviewSummary = [];
+          } finally {
+            this.bankDwOverviewLoading = false;
+          }
+        },
+
+
+
+
+
+        async loadBankMaster(caller) {
+          if (!this.employee) return;
+
+          // Auto-pick caller if not provided
+          if (!caller) {
+            if (this.currentView === "bankAccounts") caller = "BANK_ACCOUNTS";
+            else if (this.currentView === "depositWithdraw") caller = this.dwActiveAppId || "DEPOSIT_WITHDRAW";
+            else caller = "DEPOSIT_WITHDRAW";
+          }
+
+          try {
+            const body = new URLSearchParams();
+            body.append("action", "BANK_MASTER_LIST");
+            body.append("username", this.employee.username || "");
+            body.append("caller", caller);
+
+            const res = await fetch(ACCESS_CONTROL_URL, { method: "POST", body });
+            const data = await res.json();
+
+            if (!data.ok) {
+              alert("Error loading bank categories: " + (data.error || "UNKNOWN"));
+              this.bankMaster = [];
+              return;
+            }
+
+            this.bankMaster = Array.isArray(data.banks) ? data.banks : [];
+          } catch (err) {
+            console.error(err);
+            alert("Network error while loading bank categories.");
+            this.bankMaster = [];
+          }
+        },
+
+
+        async saveBankMaster() {
+          if (!this.employee) return;
+
+          this.bankMasterSaving = true;
+          this.globalBusy = true;
+
+          try {
+            const payload = {
+              bankName: (this.bankMasterDraft.bankName || '').trim(),
+              type: this.bankMasterDraft.type || 'Bank'
+            };
+
+            if (!payload.bankName) {
+              alert("Bank name is required.");
+              return;
+            }
+
+            const body = new URLSearchParams();
+            body.append("action", "BANK_MASTER_SAVE");
+            body.append("username", this.employee.username || "");
+            body.append("bankJson", JSON.stringify(payload));
+
+            const res = await fetch(ACCESS_CONTROL_URL, { method: "POST", body });
+            const data = await res.json();
+
+            if (!data.ok) {
+              alert("Error saving bank type: " + (data.error || "UNKNOWN"));
+              return;
+            }
+
+            alert(data.isNew ? "New bank added." : "Bank updated.");
+
+            // ✅ Reload master list so table is up to date
+            await this.loadBankMaster(
+              this.currentView === "bankAccounts"
+                ? "BANK_ACCOUNTS"
+                : (this.dwActiveAppId || "DEPOSIT_WITHDRAW")
+            );
+
+
+            // Clear form after save
+            this.bankMasterDraft = { bankName: "", type: "Bank" };
+
+          } catch (err) {
+            console.error(err);
+            alert("Network error while saving bank type.");
+          } finally {
+            this.bankMasterSaving = false;
+            this.globalBusy = false;
+          }
+        },
+
+        async loadDwEntries() {
+          if (!this.employee) {
+            this.setStatus("Session expired. Please log in again.", "error");
+            this.currentView = "login";
+            return;
+          }
+
+          this.dwLoading = true;
+          try {
+            const body = new URLSearchParams();
+            body.append("action", "DW_LIST");
+            body.append("username", this.employee.username || "");
+            body.append("appId", this.dwActiveAppId || "DEPOSIT_WITHDRAW"); // NEW
+
+            const res = await fetch(ACCESS_CONTROL_URL, { method: "POST", body });
+            const data = await res.json();
+
+            if (!data.ok) {
+              this.dwEntries = [];
+              alert("Error loading deposit/withdraw entries: " + (data.error || "UNKNOWN"));
+              return;
+            }
+
+
+            this.dwEntries = Array.isArray(data.entries) ? data.entries : [];
+            this.dwLastLoadedAt = new Date();
+          } catch (err) {
+            console.error(err);
+            alert("Network error while loading deposit/withdraw entries.");
+            this.dwEntries = [];
+          } finally {
+            this.dwLoading = false;
+          }
+
+        },
+
+        resetDwForm() {
+          this.dwForm = {
+            nature: 'Deposit',
+            bankAccount: '',
+            selectBankAccount: '',
+            userAccountName: '',
+            amount: '',
+            promotion: false,
+            comment: ''
+          };
+          this.dwRecallId = null;
+          this.dwEditSourceId = null;
+        },
+
+        validateDwForm() {
+          const nature = (this.dwForm.nature || '').trim();
+          const bankAccount = (this.dwForm.bankAccount || '').trim();
+          const selectBankAccount = (this.dwForm.selectBankAccount || '').trim();
+          const amountNum = Number(this.dwForm.amount);
+
+          if (!nature || (nature !== 'Deposit' && nature !== 'Withdraw')) {
+            alert("Nature must be Deposit or Withdraw.");
+            return false;
+          }
+          if (!bankAccount) {
+            alert("Please select Bank Account.");
+            return false;
+          }
+          if (!selectBankAccount) {
+            alert("Please select specific account (Select Bank Account).");
+            return false;
+          }
+          if (!isFinite(amountNum) || amountNum <= 0) {
+            alert("Amount must be greater than 0.");
+            return false;
+          }
+          return true;
+        },
+
+        async handleDwProcessClick() {
+          if (!this.employee) {
+            this.setStatus("Session expired. Please log in again.", "error");
+            this.currentView = "login";
+            return;
+          }
+
+          if (!this.validateDwForm()) return;
+
+          const amountNum = Number(this.dwForm.amount);
+          const payload = {
+            nature: this.dwForm.nature,
+            bankAccount: this.dwForm.bankAccount,
+            selectBankAccount: this.dwForm.selectBankAccount,
+            userAccountName: this.dwForm.userAccountName,
+            amount: amountNum,
+            promotion: !!this.dwForm.promotion,
+            comment: this.dwForm.comment,
+            sourceEntryId: this.dwEditSourceId || null
+          };
+
+          this.dwSaving = true;
+          this.globalBusy = true;
+
+          try {
+            const body = new URLSearchParams();
+            body.append("action", "DW_SAVE");
+            body.append("username", this.employee.username || "");
+            body.append("appId", this.dwActiveAppId || "DEPOSIT_WITHDRAW"); // NEW
+            body.append("dwJson", JSON.stringify(payload));
+
+            console.time('DW_SAVE');
+
+
+            const res = await fetch(ACCESS_CONTROL_URL, { method: "POST", body });
+            const data = await res.json();
+            console.log('DW_SAVE debug:', data.debug);
+
+            if (!data.ok) {
+              if (data.error === "VALIDATION_ERROR" && data.fieldErrors) {
+                console.error("DW validation errors:", data.fieldErrors);
+                alert("Validation error. See console for details.");
+              } else if (data.error === "BUSY") {
+                alert("System busy, please try again in a moment.");
+              } else {
+                alert("Error saving deposit/withdraw entry: " + (data.error || "UNKNOWN"));
+              }
+              return;
+            }
+
+            // Always reload from backend so balances are correct
+            this.dwDataLoaded = false;  // mark stale, reload only when user opens list/overview
+
+            alert("Deposit/withdraw entry saved.");
+            this.resetDwForm();
+            // stay on New tab or switch if you want: this.dwTab = 'overview';
+
+          } catch (err) {
+            console.error(err);
+            alert("Network error while saving deposit/withdraw entry.");
+          } finally {
+            console.timeEnd('DW_SAVE');
+            this.dwSaving = false;
+            this.globalBusy = false;
+          }
+        },
+
+        loadDwFromId() {
+          const id = Number(this.dwRecallId);
+          if (!isFinite(id) || id <= 0) {
+            alert("Please enter a valid EntryId.");
+            return;
+          }
+
+          if (!this.dwEntries || !this.dwEntries.length) {
+            alert("No records loaded yet.");
+            return;
+          }
+
+          const entry = this.dwEntries.find(e => Number(e.entryId) === id);
+          if (!entry) {
+            alert("No record found for this EntryId.");
+            return;
+          }
+
+          if (entry.status && entry.status.toUpperCase() === 'VOID') {
+            if (!confirm("This entry is already VOID. Use it as a template for a new correction?")) {
+              return;
+            }
+          }
+
+          // map entry back into form
+          this.dwForm.nature = entry.nature || 'Deposit';
+          this.dwForm.bankAccount = entry.bankAccount || '';
+          this.dwForm.selectBankAccount = entry.selectBankAccount || '';
+          this.dwForm.userAccountName = entry.userAccountName || '';
+          this.dwForm.amount = entry.amount != null ? String(entry.amount) : '';
+          this.dwForm.promotion = !!entry.promotion;
+          this.dwForm.comment = entry.comment || '';
+
+          this.dwEditSourceId = entry.entryId;
+        },
+
+        async setDwTab(tab) {
+          this.dwTab = tab;
+
+          // Only load heavy data on demand
+          if (tab === 'overview' || tab === 'list') {
+            if (!this.dwDataLoaded) {
+              await this.loadDwEntries(); // <-- use your existing loader
+              this.dwDataLoaded = true;
+            }
+          }
+        },
+
+        async refreshDwData() {
+          if (this.dwLoading) return;
+          this.dwLoading = true;
+          try {
+            await this.loadDwEntries();
+            this.dwDataLoaded = true;
+          } finally {
+            this.dwLoading = false;
+          }
+        },
+
+        formatDateTime(d) {
+          if (!d) return '';
+          const x = new Date(d);
+          return x.toLocaleString();
+        }
+
+
+
+
+
+
+
+        // end of method
+      },
+      mounted() {
+        // restore session if any
+        this.restoreSession();
+
+        // global Enter listener for login
+        window.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && this.currentView === "login") {
+            e.preventDefault();
+            this.login();
+          }
+        });
+      }
+    }).mount("#app");
+  </script>
+</body>
+
+</html>
